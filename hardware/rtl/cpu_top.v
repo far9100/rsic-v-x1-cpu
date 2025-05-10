@@ -21,7 +21,40 @@ module cpu_top (
     // output wire        d_mem_write
 );
 
-    // Wires connecting pipeline stages
+    // Internal Wires with defined widths
+    wire [31:0] id_ex_instr;                 // Instruction from IF/ID to ID stage
+    wire [3:0]  ex_mem_alu_op;               // ALU operation from ID/EX to EX stage
+    wire [31:0] ex_mem_alu_result_pre_fwd;   // ALU result from EX to EX/MEM stage
+    wire        ex_zero_flag;                // Zero flag from EX stage
+    wire [31:0] ex_mem_rs2_data_for_store;   // rs2 data for store, from ID/EX to EX/MEM
+    // wire [4:0]  ex_mem_rd_addr_for_mem;   // This specific wire is redundant if ex_mem_rd_addr_for_ex is used directly.
+    wire [31:0] mem_wb_alu_result_from_exmem; // ALU result from EX/MEM to MEM/WB
+    wire [4:0]  mem_wb_rd_addr_from_exmem;   // rd_addr from EX/MEM to MEM/WB
+    wire        mem_zero_flag;               // Zero flag from EX/MEM to MEM stage (if branch in MEM)
+    wire        d_mem_read_ctrl;             // Control for data memory read
+    wire        d_mem_write_ctrl;            // Control for data memory write
+    wire        mem_wb_reg_write_ctrl_from_exmem; // RegWrite from EX/MEM to MEM/WB
+    wire [1:0]  mem_wb_mem_to_reg_ctrl_from_exmem; // MemToReg from EX/MEM to MEM/WB
+    wire [31:0] mem_wb_mem_rdata_from_mem;   // Data read from memory, from MEM to MEM/WB
+    wire [31:0] mem_wb_data;                 // Data to be written back to register file in WB
+
+    // Placeholder for signals that might be used by forwarding/hazard units or complex paths
+    wire [31:0] ex_mem_pc_plus_4;
+    wire [31:0] ex_mem_rs1_data;
+    wire [31:0] ex_mem_rs2_data_for_alu;
+    wire [31:0] ex_mem_imm_ext;
+    wire [4:0]  ex_mem_rs1_addr;
+    wire [4:0]  ex_mem_rs2_addr;
+    wire [4:0]  ex_mem_rd_addr_for_ex;
+    wire        ex_mem_alu_src;
+    wire        ex_mem_mem_read_ctrl;
+    wire        ex_mem_mem_write_ctrl;
+    wire        ex_mem_reg_write_ctrl;
+    wire [1:0]  ex_mem_mem_to_reg_ctrl;
+    wire [31:0] id_ex_pc_plus_4_for_jalr_jal; // Placeholder for PC+4 for JAL/JALR
+
+
+    // Wires connecting pipeline stages (original declarations, some might be covered above)
     // IF/ID
     wire [31:0] if_id_pc_plus_4;
     wire [31:0] if_id_instr;
@@ -69,6 +102,9 @@ module cpu_top (
     // wire        if_id_write_en;
     // wire        id_ex_bubble; // or stall
 
+    // Assign id_ex_pc_plus_4_for_jalr_jal (simplified)
+    assign id_ex_pc_plus_4_for_jalr_jal = id_ex_pc_plus_4;
+
 
     // Instantiate Pipeline Stages
     //------------------------------------------------------------------------
@@ -102,7 +138,6 @@ module cpu_top (
     //------------------------------------------------------------------------
     // ID Stage
     //------------------------------------------------------------------------
-    // wire [31:0] id_ex_instr; // Instruction for ID stage, from IF/ID register
     id_stage u_id_stage (
         .clk            (clk),
         .rst_n          (rst_n),
@@ -168,16 +203,6 @@ module cpu_top (
     //------------------------------------------------------------------------
     // EX Stage
     //------------------------------------------------------------------------
-    // wire [31:0] ex_mem_rs1_data; // from ID/EX reg
-    // wire [31:0] ex_mem_rs2_data_for_alu; // from ID/EX reg
-    // wire [31:0] ex_mem_imm_ext; // from ID/EX reg
-    // wire [4:0]  ex_mem_rd_addr_for_ex; // from ID/EX reg
-    // wire        ex_mem_alu_src; // from ID/EX reg
-    // wire [3:0]  ex_mem_alu_op; // from ID/EX reg
-    // Forwarding inputs for ALU
-    // wire [31:0] forwarded_rs1_data;
-    // wire [31:0] forwarded_rs2_data;
-
     ex_stage u_ex_stage (
         .clk            (clk),
         .rst_n          (rst_n),
@@ -206,21 +231,12 @@ module cpu_top (
     //------------------------------------------------------------------------
     // EX/MEM Pipeline Register
     //------------------------------------------------------------------------
-    // wire ex_mem_alu_result_pre_fwd; // from EX stage
-    // wire [31:0] ex_mem_rs2_data_for_store; // from ID/EX reg (original rs2_data for sw)
-    // wire [4:0]  ex_mem_rd_addr_for_mem; // from ID/EX reg (passed through)
-    // wire        ex_mem_mem_read_ctrl; // from ID/EX reg
-    // wire        ex_mem_mem_write_ctrl; // from ID/EX reg
-    // wire        ex_mem_reg_write_ctrl; // from ID/EX reg
-    // wire [1:0]  ex_mem_mem_to_reg_ctrl; // from ID/EX reg
-    // wire        ex_zero_flag; // from EX stage
-
     pipeline_reg_ex_mem u_pipeline_reg_ex_mem (
         .clk            (clk),
         .rst_n          (rst_n),
         .ex_alu_result_i(ex_mem_alu_result_pre_fwd),
         .ex_rs2_data_i  (ex_mem_rs2_data_for_store), // rs2_data for sw, from ID/EX
-        .ex_rd_addr_i   (ex_mem_rd_addr_for_mem),    // rd_addr, from ID/EX
+        .ex_rd_addr_i   (ex_mem_rd_addr_for_ex),    // CORRECTED: rd_addr from ID/EX's output ex_mem_rd_addr_for_ex
         .ex_zero_flag_i (ex_zero_flag),              // For branch decision in MEM or later
         .ex_mem_read_i  (ex_mem_mem_read_ctrl),
         .ex_mem_write_i (ex_mem_mem_write_ctrl),
@@ -242,11 +258,6 @@ module cpu_top (
     //------------------------------------------------------------------------
     // MEM Stage
     //------------------------------------------------------------------------
-    // wire [31:0] mem_wb_alu_result_from_exmem; // from EX/MEM reg
-    // wire        d_mem_read_ctrl;  // from EX/MEM reg
-    // wire        d_mem_write_ctrl; // from EX/MEM reg
-    // Data memory interface signals are directly connected from/to top level or EX/MEM reg
-
     mem_stage u_mem_stage (
         .clk            (clk),
         .rst_n          (rst_n),
@@ -270,12 +281,6 @@ module cpu_top (
     //------------------------------------------------------------------------
     // MEM/WB Pipeline Register
     //------------------------------------------------------------------------
-    // wire [31:0] mem_wb_mem_rdata_from_mem; // from MEM stage (d_mem_rdata)
-    // wire [31:0] mem_wb_alu_result_passthru; // from EX/MEM reg (passed through)
-    // wire [4:0]  mem_wb_rd_addr_passthru;    // from EX/MEM reg (passed through)
-    // wire        mem_wb_reg_write_ctrl_passthru; // from EX/MEM reg
-    // wire [1:0]  mem_wb_mem_to_reg_ctrl_passthru; // from EX/MEM reg
-
     pipeline_reg_mem_wb u_pipeline_reg_mem_wb (
         .clk            (clk),
         .rst_n          (rst_n),
@@ -299,7 +304,7 @@ module cpu_top (
     // The signals mem_wb_reg_write, mem_wb_rd_addr, and the data to be written (selected by mem_wb_mem_to_reg)
     // are fed back to the ID stage's register file.
 
-    wire [31:0] mem_wb_data; // Data to be written back to register file
+    // wire [31:0] mem_wb_data; // Data to be written back to register file -- Declared above
 
     assign mem_wb_data = (mem_wb_mem_to_reg == 2'b01) ? mem_wb_mem_rdata    // Load
                        : (mem_wb_mem_to_reg == 2'b00) ? mem_wb_alu_result   // ALU op
@@ -342,41 +347,8 @@ module cpu_top (
 
     // Temporary assignments for signals that would come from Hazard/Forwarding or are complex
     // These should be properly driven by Hazard Detection and Control Logic
-    // wire pc_write_en = 1'b1;
-    // wire if_id_write_en = 1'b1;
-    // wire id_ex_bubble = 1'b0;
-
-    // Simplified connections, assuming no stalls or flushes for now
-    // Many signals in pipeline registers are just passed through if not generated by hazard unit
-    wire [31:0] id_ex_pc_plus_4_for_jalr_jal; // Placeholder for PC+4 for JAL/JALR
-    assign id_ex_pc_plus_4_for_jalr_jal = id_ex_pc_plus_4; // Simplified
-
-    // Placeholder for signals that need proper definition based on control logic
-    wire [31:0] ex_mem_pc_plus_4;
-    wire [31:0] ex_mem_rs1_data;
-    wire [31:0] ex_mem_rs2_data_for_alu;
-    wire [31:0] ex_mem_imm_ext;
-    wire [4:0]  ex_mem_rs1_addr;
-    wire [4:0]  ex_mem_rs2_addr;
-    wire [4:0]  ex_mem_rd_addr_for_ex;
-    wire        ex_mem_alu_src;
-    // wire [3:0]  ex_mem_alu_op; // Already defined
-    wire        ex_mem_mem_read_ctrl;
-    wire        ex_mem_mem_write_ctrl;
-    wire        ex_mem_reg_write_ctrl;
-    wire [1:0]  ex_mem_mem_to_reg_ctrl;
-
-    wire [31:0] ex_mem_rs2_data_for_store;
-    wire [4:0]  ex_mem_rd_addr_for_mem;
-
-    wire [31:0] mem_wb_alu_result_from_exmem;
-    wire [4:0]  mem_wb_rd_addr_from_exmem;
-    wire        mem_zero_flag;
-    wire        d_mem_read_ctrl;
-    wire        d_mem_write_ctrl;
-    wire        mem_wb_reg_write_ctrl_from_exmem;
-    wire [1:0]  mem_wb_mem_to_reg_ctrl_from_exmem;
-    wire [31:0] mem_wb_mem_rdata_from_mem;
-
+    // wire pc_write_en = 1'b1; // Example
+    // wire if_id_write_en = 1'b1; // Example
+    // wire id_ex_bubble = 1'b0; // Example
 
 endmodule
