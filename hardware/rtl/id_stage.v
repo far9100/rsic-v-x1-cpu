@@ -1,5 +1,5 @@
-// RISC-V 32IM CPU - Instruction Decode (ID) Stage
-// File: hardware/rtl/id_stage.v
+// RISC-V 32IM CPU - 指令解碼（ID）階段
+// 檔案：hardware/rtl/id_stage.v
 
 `timescale 1ns / 1ps
 
@@ -7,40 +7,40 @@ module id_stage (
     input  wire        clk,
     input  wire        rst_n,
 
-    // Inputs from IF/ID Pipeline Register
-    input  wire [31:0] instr_i,      // Current instruction
-    input  wire [31:0] pc_plus_4_i,  // PC + 4 from IF stage
+    // 來自 IF/ID 管線暫存器的輸入
+    input  wire [31:0] instr_i,      // 當前指令
+    input  wire [31:0] pc_plus_4_i,  // 來自 IF 階段的 PC + 4
 
-    // Write-back data from MEM/WB pipeline register (for register file write)
-    input  wire        wb_reg_write_i, // Write enable signal from WB stage
-    input  wire [4:0]  wb_rd_addr_i,   // Destination register address from WB stage
-    input  wire [31:0] wb_data_i,      // Data to write back from WB stage
+    // 來自 MEM/WB 管線暫存器的寫回資料（用於暫存器檔案寫入）
+    input  wire        wb_reg_write_i, // 來自 WB 階段的寫入啟用信號
+    input  wire [4:0]  wb_rd_addr_i,   // 來自 WB 階段的目標暫存器位址
+    input  wire [31:0] wb_data_i,      // 來自 WB 階段的寫回資料
 
-    // Outputs to ID/EX Pipeline Register
-    // Data path
-    output wire [31:0] rs1_data_o,     // Data from source register 1
-    output wire [31:0] rs2_data_o,     // Data from source register 2
-    output wire [31:0] imm_ext_o,      // Sign-extended immediate value
-    output wire [4:0]  rs1_addr_o,     // Address of source register 1
-    output wire [4:0]  rs2_addr_o,     // Address of source register 2
-    output wire [4:0]  rd_addr_o,      // Address of destination register
-    output wire [31:0] id_pc_plus_4_o, // PC + 4 passed through
+    // 輸出到 ID/EX 管線暫存器
+    // 資料路徑
+    output wire [31:0] rs1_data_o,     // 來源暫存器 1 的資料
+    output wire [31:0] rs2_data_o,     // 來源暫存器 2 的資料
+    output wire [31:0] imm_ext_o,      // 符號擴展的立即值
+    output wire [4:0]  rs1_addr_o,     // 來源暫存器 1 的位址
+    output wire [4:0]  rs2_addr_o,     // 來源暫存器 2 的位址
+    output wire [4:0]  rd_addr_o,      // 目標暫存器的位址
+    output wire [31:0] id_pc_plus_4_o, // 傳遞的 PC + 4
 
-    // Control signals for EX stage
-    output wire        alu_src_o,      // ALU operand B source (0: rs2_data, 1: immediate)
-    output wire [3:0]  alu_op_o,       // ALU operation type
-    // Control signals for MEM stage (passed through EX)
-    output wire        mem_read_o,     // Memory read enable
-    output wire        mem_write_o,    // Memory write enable
-    // Control signals for WB stage (passed through EX, MEM)
-    output wire        reg_write_o,    // Register write enable
-    output wire [1:0]  mem_to_reg_o    // Data source for write-back (00: ALU, 01: Mem, 10: PC+4 for JAL/JALR)
+    // EX 階段的控制信號
+    output wire        alu_src_o,      // ALU 運算元 B 的來源（0：rs2_data，1：立即值）
+    output wire [3:0]  alu_op_o,       // ALU 運算類型
+    // MEM 階段的控制信號（通過 EX 階段）
+    output wire        mem_read_o,     // 記憶體讀取啟用
+    output wire        mem_write_o,    // 記憶體寫入啟用
+    // WB 階段的控制信號（通過 EX、MEM 階段）
+    output wire        reg_write_o,    // 暫存器寫入啟用
+    output wire [1:0]  mem_to_reg_o    // 寫回資料來源（00：ALU，01：記憶體，10：PC+4 用於 JAL/JALR）
 
-    // Output to Hazard Unit (if stall is detected here due to data dependency on load)
+    // 輸出到危害單元（如果在這裡檢測到因載入指令的資料相依性而需要停滯）
     // output wire        id_stall_o
 );
 
-    // Instruction fields extraction
+    // 指令欄位提取
     wire [6:0]  opcode  = instr_i[6:0];
     wire [4:0]  rd      = instr_i[11:7];
     wire [2:0]  funct3  = instr_i[14:12];
@@ -48,7 +48,7 @@ module id_stage (
     wire [4:0]  rs2     = instr_i[24:20];
     wire [6:0]  funct7  = instr_i[31:25];
 
-    // Register File
+    // 暫存器檔案
     reg_file u_reg_file (
         .clk         (clk),
         .rst_n       (rst_n),
@@ -61,20 +61,20 @@ module id_stage (
         .rs2_data    (rs2_data_o)
     );
 
-    // Debug printout for register values after write
+    // 寫入後暫存器值的除錯輸出
     // always @(posedge clk) begin
     //     if (wb_reg_write_i) begin
     //         $display("DEBUG REG WRITE: rd_addr=%h, rd_data=%h", wb_rd_addr_i, wb_data_i);
     //     end
     // end
 
-    // Immediate Generator instance
+    // 立即值產生器實例
     immediate_generator u_imm_gen (
         .instr    (instr_i),
         .imm_ext_o(imm_ext_o)
     );
 
-    // Control Unit instance
+    // 控制單元實例
     control_unit u_control_unit (
         .opcode      (opcode),
         .funct3      (funct3),
@@ -87,7 +87,7 @@ module id_stage (
         .mem_to_reg_o(mem_to_reg_o)
     );
 
-    // Debug output for when MUL instruction is processed
+    // MUL 指令處理時的除錯輸出
     // always @(*) begin
     //     if (opcode == 7'b0110011 && funct3 == 3'b000 && funct7 == 7'b0000001) begin
     //         $display("DEBUG ID MUL: rs1_addr=%h, rs2_addr=%h, rs1_data=%h, rs2_data=%h, alu_op=%h", 
@@ -95,15 +95,15 @@ module id_stage (
     //     end
     // end
 
-    // Pass through PC+4
+    // 傳遞 PC+4
     assign id_pc_plus_4_o = pc_plus_4_i;
 
-    // Pass through register addresses
+    // 傳遞暫存器位址
     assign rs1_addr_o = rs1;
     assign rs2_addr_o = rs2;
     assign rd_addr_o  = rd;
 
-    // Stall detection logic (simplified placeholder)
-    // assign id_stall_o = (mem_read_o && reg_write_o && ((rd == rs1) || (rd == rs2))); // Basic load-use hazard
+    // 停滯檢測邏輯（簡化的佔位符）
+    // assign id_stall_o = (mem_read_o && reg_write_o && ((rd == rs1) || (rd == rs2))); // 基本的載入-使用危害
 
 endmodule

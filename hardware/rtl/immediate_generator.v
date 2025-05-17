@@ -1,61 +1,60 @@
-// RISC-V 32IM CPU - Immediate Generator
-// File: hardware/rtl/immediate_generator.v
+// RISC-V 32IM CPU - 立即值產生器
+// 檔案：hardware/rtl/immediate_generator.v
 
 `timescale 1ns / 1ps
 
 module immediate_generator (
-    input  wire [31:0] instr,      // Input instruction
-    output wire [31:0] imm_ext_o   // Output sign-extended immediate
+    input  wire [31:0] instr,      // 輸入指令
+    output wire [31:0] imm_ext_o   // 輸出符號擴展的立即值
 );
 
-    // Instruction fields used for immediate generation
+    // 用於產生立即值的指令欄位
     wire [6:0] opcode = instr[6:0];
-    // wire [2:0] funct3 = instr[14:12]; // Not directly used for selection here, but opcode is key
+    // wire [2:0] funct3 = instr[14:12]; // 這裡不直接用於選擇，但 opcode 是關鍵
 
-    // Immediate types based on RISC-V spec
+    // 根據 RISC-V 規格的立即值類型
     wire [31:0] imm_i_type;
     wire [31:0] imm_s_type;
     wire [31:0] imm_b_type;
     wire [31:0] imm_u_type;
     wire [31:0] imm_j_type;
 
-    // I-type immediate (instructions like ADDI, SLTI, LW, JALR)
+    // I 型立即值（如 ADDI、SLTI、LW、JALR 等指令）
     // imm[11:0] = instr[31:20]
     assign imm_i_type = {{20{instr[31]}}, instr[31:20]};
 
-    // S-type immediate (store instructions like SW, SB)
+    // S 型立即值（如 SW、SB 等儲存指令）
     // imm[11:0] = {instr[31:25], instr[11:7]}
     assign imm_s_type = {{20{instr[31]}}, instr[31:25], instr[11:7]};
 
-    // B-type immediate (branch instructions like BEQ, BNE)
+    // B 型立即值（如 BEQ、BNE 等分支指令）
     // imm[12|10:5|4:1|11] = {instr[31], instr[7], instr[30:25], instr[11:8], 1'b0}
     assign imm_b_type = {{20{instr[31]}}, instr[7], instr[30:25], instr[11:8], 1'b0};
 
-    // U-type immediate (LUI, AUIPC)
+    // U 型立即值（LUI、AUIPC）
     // imm[31:12] = instr[31:12]
     assign imm_u_type = {instr[31:12], 12'b0};
 
-    // J-type immediate (JAL instruction)
+    // J 型立即值（JAL 指令）
     // imm[20|10:1|11|19:12] = {instr[31], instr[19:12], instr[20], instr[30:21], 1'b0}
     assign imm_j_type = {{12{instr[31]}}, instr[19:12], instr[20], instr[30:21], 1'b0};
 
+    // 根據操作碼選擇正確的立即值
+    // 此邏輯需要根據 RISC-V 操作碼對應表精確實現
+    // 使用 localparam 定義操作碼以提高可讀性
+    localparam OPCODE_LOAD   = 7'b0000011; // I 型（LW、LB、LH 等）
+    localparam OPCODE_IMM    = 7'b0010011; // I 型（ADDI、SLTI、XORI 等）
+    localparam OPCODE_AUIPC  = 7'b0010111; // U 型
+    localparam OPCODE_STORE  = 7'b0100011; // S 型（SW、SB、SH）
+    localparam OPCODE_AMO    = 7'b0101111; // 這裡未完全處理，類似 R 型但有些有立即值
+    localparam OPCODE_OP     = 7'b0110011; // R 型（ADD、SUB、MUL 等）- 不從這裡產生立即值
+    localparam OPCODE_LUI    = 7'b0110111; // U 型
+    localparam OPCODE_BRANCH = 7'b1100011; // B 型（BEQ、BNE 等）
+    localparam OPCODE_JALR   = 7'b1100111; // I 型（JALR）
+    localparam OPCODE_JAL    = 7'b1101111; // J 型（JAL）
+    localparam OPCODE_SYSTEM = 7'b1110011; // I 型（CSR 指令）
 
-    // Select the correct immediate based on opcode
-    // This logic needs to be precise according to RISC-V opcode map.
-    // Using localparam for opcodes for clarity.
-    localparam OPCODE_LOAD   = 7'b0000011; // I-type (LW, LB, LH, etc.)
-    localparam OPCODE_IMM    = 7'b0010011; // I-type (ADDI, SLTI, XORI, etc.)
-    localparam OPCODE_AUIPC  = 7'b0010111; // U-type
-    localparam OPCODE_STORE  = 7'b0100011; // S-type (SW, SB, SH)
-    localparam OPCODE_AMO    = 7'b0101111; // Not fully handled here, R-type like but some have imm
-    localparam OPCODE_OP     = 7'b0110011; // R-type (ADD, SUB, MUL, etc.) - No immediate from here
-    localparam OPCODE_LUI    = 7'b0110111; // U-type
-    localparam OPCODE_BRANCH = 7'b1100011; // B-type (BEQ, BNE, etc.)
-    localparam OPCODE_JALR   = 7'b1100111; // I-type (JALR)
-    localparam OPCODE_JAL    = 7'b1101111; // J-type (JAL)
-    localparam OPCODE_SYSTEM = 7'b1110011; // I-type (CSR instructions)
-
-    // Default to 0 if no specific immediate type matches (e.g., for R-type)
+    // 如果沒有特定的立即值類型匹配（例如，R 型），預設為 0
     reg [31:0] selected_imm;
 
     always @(*) begin
@@ -68,8 +67,8 @@ module immediate_generator (
             OPCODE_BRANCH: selected_imm = imm_b_type;
             OPCODE_JALR:   selected_imm = imm_i_type;
             OPCODE_JAL:    selected_imm = imm_j_type;
-            OPCODE_SYSTEM: selected_imm = imm_i_type; // For CSRI instructions
-            default:       selected_imm = 32'b0;     // R-type or other non-immediate instructions
+            OPCODE_SYSTEM: selected_imm = imm_i_type; // 用於 CSRI 指令
+            default:       selected_imm = 32'b0;     // R 型或其他非立即值指令
         endcase
     end
 

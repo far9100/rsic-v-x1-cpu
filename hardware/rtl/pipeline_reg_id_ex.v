@@ -1,35 +1,35 @@
-// RISC-V 32IM CPU - ID/EX Pipeline Register
-// File: hardware/rtl/pipeline_reg_id_ex.v
+// RISC-V 32IM CPU - ID/EX 管線暫存器
+// 檔案：hardware/rtl/pipeline_reg_id_ex.v
 
 `timescale 1ns / 1ps
 
 module pipeline_reg_id_ex (
     input  wire        clk,
     input  wire        rst_n,
-    // input  wire        id_ex_bubble_i, // From Hazard Unit (to insert bubble/stall)
-    // input  wire        id_ex_flush_en, // From Hazard Unit (to clear register - branch mispredict)
+    // input  wire        id_ex_bubble_i, // 來自危害單元（用於插入氣泡/停滯）
+    // input  wire        id_ex_flush_en, // 來自危害單元（用於清除暫存器 - 分支預測錯誤）
 
-    // Inputs from ID Stage (Data Path)
+    // 來自 ID 階段的輸入（資料路徑）
     input  wire [31:0] id_pc_plus_4_i,
     input  wire [31:0] id_rs1_data_i,
     input  wire [31:0] id_rs2_data_i,
     input  wire [31:0] id_imm_ext_i,
-    input  wire [4:0]  id_rs1_addr_i, // For forwarding
-    input  wire [4:0]  id_rs2_addr_i, // For forwarding
+    input  wire [4:0]  id_rs1_addr_i, // 用於前遞
+    input  wire [4:0]  id_rs2_addr_i, // 用於前遞
     input  wire [4:0]  id_rd_addr_i,
 
-    // Inputs from ID Stage (Control Signals)
-    // EX controls
+    // 來自 ID 階段的輸入（控制信號）
+    // EX 控制
     input  wire        id_alu_src_i,
     input  wire [3:0]  id_alu_op_i,
-    // MEM controls
+    // MEM 控制
     input  wire        id_mem_read_i,
     input  wire        id_mem_write_i,
-    // WB controls
+    // WB 控制
     input  wire        id_reg_write_i,
     input  wire [1:0]  id_mem_to_reg_i,
 
-    // Outputs to EX Stage (Data Path)
+    // 輸出到 EX 階段（資料路徑）
     output reg [31:0] ex_pc_plus_4_o,
     output reg [31:0] ex_rs1_data_o,
     output reg [31:0] ex_rs2_data_o,
@@ -38,21 +38,21 @@ module pipeline_reg_id_ex (
     output reg [4:0]  ex_rs2_addr_o,
     output reg [4:0]  ex_rd_addr_o,
 
-    // Outputs to EX Stage (Control Signals)
-    // EX controls
+    // 輸出到 EX 階段（控制信號）
+    // EX 控制
     output reg        ex_alu_src_o,
     output reg [3:0]  ex_alu_op_o,
-    // MEM controls (passed to EX/MEM register)
+    // MEM 控制（傳遞到 EX/MEM 暫存器）
     output reg        ex_mem_read_o,
     output reg        ex_mem_write_o,
-    // WB controls (passed to EX/MEM and MEM/WB registers)
+    // WB 控制（傳遞到 EX/MEM 和 MEM/WB 暫存器）
     output reg        ex_reg_write_o,
     output reg [1:0]  ex_mem_to_reg_o
 );
 
-    // Default control signals for a bubble (NOP)
+    // 氣泡（NOP）的預設控制信號
     localparam NOP_ALU_SRC    = 1'b0;
-    localparam [3:0] NOP_ALU_OP = 4'b0000; // e.g., ADD
+    localparam [3:0] NOP_ALU_OP = 4'b0000; // 例如：ADD
     localparam NOP_MEM_READ   = 1'b0;
     localparam NOP_MEM_WRITE  = 1'b0;
     localparam NOP_REG_WRITE  = 1'b0;
@@ -61,7 +61,7 @@ module pipeline_reg_id_ex (
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            // Reset to NOP-like state
+            // 重置為類似 NOP 的狀態
             ex_pc_plus_4_o  <= 32'b0;
             ex_rs1_data_o   <= 32'b0;
             ex_rs2_data_o   <= 32'b0;
@@ -77,24 +77,24 @@ module pipeline_reg_id_ex (
             ex_reg_write_o  <= NOP_REG_WRITE;
             ex_mem_to_reg_o <= NOP_MEM_TO_REG;
         end
-        // else if (id_ex_flush_en || id_ex_bubble_i) begin // If flushing or bubbling
-        //     // Insert NOP (or bubble equivalent)
-        //     ex_pc_plus_4_o  <= ex_pc_plus_4_o; // Keep PC for potential use or let it be don't care
-        //     ex_rs1_data_o   <= 32'b0; // Data paths don't matter for NOP
+        // else if (id_ex_flush_en || id_ex_bubble_i) begin // 如果需要清除或插入氣泡
+        //     // 插入 NOP（或等效的氣泡）
+        //     ex_pc_plus_4_o  <= ex_pc_plus_4_o; // 保留 PC 以供潛在使用或設為無關
+        //     ex_rs1_data_o   <= 32'b0; // 資料路徑對 NOP 不重要
         //     ex_rs2_data_o   <= 32'b0;
         //     ex_imm_ext_o    <= 32'b0;
         //     ex_rs1_addr_o   <= 5'b0;
         //     ex_rs2_addr_o   <= 5'b0;
-        //     ex_rd_addr_o    <= 5'b0; // rd = x0 for NOP
+        //     ex_rd_addr_o    <= 5'b0; // NOP 的 rd = x0
 
         //     ex_alu_src_o    <= NOP_ALU_SRC;
         //     ex_alu_op_o     <= NOP_ALU_OP;
         //     ex_mem_read_o   <= NOP_MEM_READ;
         //     ex_mem_write_o  <= NOP_MEM_WRITE;
-        //     ex_reg_write_o  <= NOP_REG_WRITE; // Critical: NOP does not write to reg
+        //     ex_reg_write_o  <= NOP_REG_WRITE; // 關鍵：NOP 不寫入暫存器
         //     ex_mem_to_reg_o <= NOP_MEM_TO_REG;
         // end
-        else begin // Normal operation: latch inputs
+        else begin // 正常運作：鎖存輸入
             ex_pc_plus_4_o  <= id_pc_plus_4_i;
             ex_rs1_data_o   <= id_rs1_data_i;
             ex_rs2_data_o   <= id_rs2_data_i;

@@ -1,132 +1,132 @@
-# RISC-V Multiplication Integrated Test Program (M Extension)
-# File: tests/asm_sources/mul_integrated_test.asm
+# RISC-V 乘法整合測試程式（M 擴展）
+# 檔案：tests/asm_sources/mul_integrated_test.asm
 
-# Purpose: Test multiplication functionality thoroughly.
-# This test includes multiple multiplication test cases with different values.
+# 目的：全面測試乘法功能
+# 本測試包含多個不同數值的乘法測試案例
 
 .globl _start
 _start:
-    # Test case 1: Basic multiplication 7 * 6 = 42
+    # 測試案例 1：基本乘法 7 * 6 = 42
     addi x5, x0, 7       # x5 = 7
     addi x6, x0, 6       # x6 = 6
 
-    # Perform multiplication
-    mul  x7, x5, x6      # x7 = x5 * x6 (x7 should be 7 * 6 = 42)
+    # 執行乘法
+    mul  x7, x5, x6      # x7 = x5 * x6（x7 應為 7 * 6 = 42）
 
-    # Test case 2: Multiplication with negative number -3 * 5 = -15
+    # 測試案例 2：與負數的乘法 -3 * 5 = -15
     addi x8, x0, -3      # x8 = -3
     addi x9, x0, 5       # x9 = 5
-    mul  x10, x8, x9     # x10 = x8 * x9 (x10 should be -3 * 5 = -15)
-                         # -15 in 32-bit 2's complement is 0xFFFFFFF1
+    mul  x10, x8, x9     # x10 = x8 * x9（x10 應為 -3 * 5 = -15）
+                         # -15 的 32 位元二補數表示為 0xFFFFFFF1
 
-    # Test case 3: 8 * 6 = 48
+    # 測試案例 3：8 * 6 = 48
     addi x11, x0, 8      # x11 = 8
     addi x12, x0, 6      # x12 = 6
-    mul  x13, x11, x12   # x13 = x11 * x12 (x13 should be 8 * 6 = 48)
+    mul  x13, x11, x12   # x13 = x11 * x12（x13 應為 8 * 6 = 48）
 
-    # Test case 4: 7 * 9 = 63
+    # 測試案例 4：7 * 9 = 63
     addi x14, x0, 7      # x14 = 7
     addi x15, x0, 9      # x15 = 9
-    mul  x16, x14, x15   # x16 = x14 * x15 (x16 should be 7 * 9 = 63)
+    mul  x16, x14, x15   # x16 = x14 * x15（x16 應為 7 * 9 = 63）
     
-    # Test case 5: 120 * 140 = 16800
+    # 測試案例 5：120 * 140 = 16800
     addi x17, x0, 120    # x17 = 120
     addi x18, x0, 140    # x18 = 140
-    mul  x19, x17, x18   # x19 = x17 * x18 (x19 should be 120 * 140 = 16800 = 0x41A0)
+    mul  x19, x17, x18   # x19 = x17 * x18（x19 應為 120 * 140 = 16800 = 0x41A0）
 
-    # Test case 6: Multiplication by 0: 5 * 0 = 0
+    # 測試案例 6：乘以零 5 * 0 = 0
     addi x20, x0, 5      # x20 = 5
     addi x21, x0, 0      # x21 = 0
-    mul  x22, x20, x21   # x22 = x20 * x21 (x22 should be 5 * 0 = 0)
+    mul  x22, x20, x21   # x22 = x20 * x21（x22 應為 5 * 0 = 0）
 
-    # Test case 7: Multiplication by 1: 5 * 1 = 5
+    # 測試案例 7：乘以一 5 * 1 = 5
     addi x23, x0, 5      # x23 = 5
     addi x24, x0, 1      # x24 = 1
-    mul  x25, x23, x24   # x25 = x23 * x24 (x25 should be 5 * 1 = 5)
+    mul  x25, x23, x24   # x25 = x23 * x24（x25 應為 5 * 1 = 5）
 
-    # Test case 8: Multiplication of negative numbers: -4 * -3 = 12
+    # 測試案例 8：負數相乘 -4 * -3 = 12
     addi x26, x0, -4     # x26 = -4
     addi x27, x0, -3     # x27 = -3
-    mul  x28, x26, x27   # x28 = x26 * x27 (x28 should be -4 * -3 = 12)
+    mul  x28, x26, x27   # x28 = x26 * x27（x28 應為 -4 * -3 = 12）
 
-    # Test case 9: Multiplication table demonstration (specific entries)
-    # Store table values in memory starting at address 0x200
-    addi x1, x0, 0x200   # Base address for multiplication table storage
+    # 測試案例 9：乘法表示範（特定項目）
+    # 將表格值儲存在記憶體中，起始位址為 0x200
+    addi x1, x0, 0x200   # 乘法表格儲存的基底位址
     
-    # Store 1*1 = 1
+    # 儲存 1*1 = 1
     addi x2, x0, 1
     addi x3, x0, 1
     mul  x4, x2, x3
     sw   x4, 0(x1)
     
-    # Store 2*2 = 4
+    # 儲存 2*2 = 4
     addi x2, x0, 2
     addi x3, x0, 2
     mul  x4, x2, x3
     sw   x4, 4(x1)
     
-    # Store 3*3 = 9
+    # 儲存 3*3 = 9
     addi x2, x0, 3
     addi x3, x0, 3
     mul  x4, x2, x3
     sw   x4, 8(x1)
     
-    # Store 4*4 = 16
+    # 儲存 4*4 = 16
     addi x2, x0, 4
     addi x3, x0, 4
     mul  x4, x2, x3
     sw   x4, 12(x1)
     
-    # Store 5*5 = 25
+    # 儲存 5*5 = 25
     addi x2, x0, 5
     addi x3, x0, 5
     mul  x4, x2, x3
     sw   x4, 16(x1)
     
-    # Store 6*6 = 36
+    # 儲存 6*6 = 36
     addi x2, x0, 6
     addi x3, x0, 6
     mul  x4, x2, x3
     sw   x4, 20(x1)
     
-    # Store 7*7 = 49
+    # 儲存 7*7 = 49
     addi x2, x0, 7
     addi x3, x0, 7
     mul  x4, x2, x3
     sw   x4, 24(x1)
     
-    # Store 8*8 = 64
+    # 儲存 8*8 = 64
     addi x2, x0, 8
     addi x3, x0, 8
     mul  x4, x2, x3
     sw   x4, 28(x1)
     
-    # Store 9*9 = 81
+    # 儲存 9*9 = 81
     addi x2, x0, 9
     addi x3, x0, 9
     mul  x4, x2, x3
     sw   x4, 32(x1)
     
-    # Infinite loop to halt the processor for observation
+    # 無限迴圈以停止處理器供觀察
 halt_loop:
-    beq  x0, x0, halt_loop # Branch to self (effectively a halt)
-    nop                     # Should not be reached
+    beq  x0, x0, halt_loop # 分支到自身（實質上為停止）
+    nop                     # 不應該執行到這裡
 
-# Expected results:
-# Register x7  should contain the value 42     (0x2A)
-# Register x10 should contain the value -15    (0xFFFFFFF1)
-# Register x13 should contain the value 48     (0x30)
-# Register x16 should contain the value 63     (0x3F)
-# Register x19 should contain the value 16800  (0x41A0)
-# Register x22 should contain the value 0      (0x0)
-# Register x25 should contain the value 5      (0x5)
-# Register x28 should contain the value 12     (0xC)
-# Memory[0x200/4] should contain the value 1   (0x1)
-# Memory[0x204/4] should contain the value 4   (0x4)
-# Memory[0x208/4] should contain the value 9   (0x9)
-# Memory[0x20C/4] should contain the value 16  (0x10)
-# Memory[0x210/4] should contain the value 25  (0x19)
-# Memory[0x214/4] should contain the value 36  (0x24)
-# Memory[0x218/4] should contain the value 49  (0x31)
-# Memory[0x21C/4] should contain the value 64  (0x40)
-# Memory[0x220/4] should contain the value 81  (0x51) 
+# 預期結果：
+# 暫存器 x7  應包含值 42     (0x2A)
+# 暫存器 x10 應包含值 -15    (0xFFFFFFF1)
+# 暫存器 x13 應包含值 48     (0x30)
+# 暫存器 x16 應包含值 63     (0x3F)
+# 暫存器 x19 應包含值 16800  (0x41A0)
+# 暫存器 x22 應包含值 0      (0x0)
+# 暫存器 x25 應包含值 5      (0x5)
+# 暫存器 x28 應包含值 12     (0xC)
+# 記憶體[0x200/4] 應包含值 1   (0x1)
+# 記憶體[0x204/4] 應包含值 4   (0x4)
+# 記憶體[0x208/4] 應包含值 9   (0x9)
+# 記憶體[0x20C/4] 應包含值 16  (0x10)
+# 記憶體[0x210/4] 應包含值 25  (0x19)
+# 記憶體[0x214/4] 應包含值 36  (0x24)
+# 記憶體[0x218/4] 應包含值 49  (0x31)
+# 記憶體[0x21C/4] 應包含值 64  (0x40)
+# 記憶體[0x220/4] 應包含值 81  (0x51) 

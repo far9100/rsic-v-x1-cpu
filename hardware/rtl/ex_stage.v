@@ -1,5 +1,5 @@
-// RISC-V 32IM CPU - Execute (EX) Stage
-// File: hardware/rtl/ex_stage.v
+// RISC-V 32IM CPU - 執行（EX）階段
+// 檔案：hardware/rtl/ex_stage.v
 
 `timescale 1ns / 1ps
 
@@ -7,64 +7,64 @@ module ex_stage (
     input  wire        clk,
     input  wire        rst_n,
 
-    // Inputs from ID/EX Pipeline Register (Data Path)
-    input  wire [31:0] rs1_data_i,     // Data from source register 1 
-    input  wire [31:0] rs2_data_i,     // Data from source register 2 
-    input  wire [31:0] imm_ext_i,      // Sign-extended immediate value
-    // input  wire [31:0] pc_plus_4_i,    // PC + 4 (for branch target calculation, JALR)
+    // 來自 ID/EX 管線暫存器的輸入（資料路徑）
+    input  wire [31:0] rs1_data_i,     // 來源暫存器 1 的資料
+    input  wire [31:0] rs2_data_i,     // 來源暫存器 2 的資料
+    input  wire [31:0] imm_ext_i,      // 符號擴展的立即值
+    // input  wire [31:0] pc_plus_4_i,    // PC + 4（用於分支目標計算，JALR）
 
-    // Inputs from ID/EX Pipeline Register (Control Signals)
-    input  wire        alu_src_i,      // ALU operand B source (0: rs2_data, 1: immediate)
-    input  wire [3:0]  alu_op_i,       // ALU/Multiplier operation type
-    input  wire [4:0]  rd_addr_i,      // Destination register address 
+    // 來自 ID/EX 管線暫存器的輸入（控制信號）
+    input  wire        alu_src_i,      // ALU 運算元 B 的來源（0：rs2_data，1：立即值）
+    input  wire [3:0]  alu_op_i,       // ALU/乘法器運算類型
+    input  wire [4:0]  rd_addr_i,      // 目標暫存器位址
 
-    // 前推輸入信號（從EX/MEM和MEM/WB階段）
-    input  wire [31:0] ex_mem_alu_result_i, // Result from EX/MEM pipeline register
-    input  wire [4:0]  ex_mem_rd_addr_i,    // Destination register from EX/MEM
-    input  wire        ex_mem_reg_write_i,  // Register write enable from EX/MEM
-    input  wire [31:0] mem_wb_alu_result_i, // Result from MEM/WB pipeline register
-    input  wire [4:0]  mem_wb_rd_addr_i,    // Destination register from MEM/WB
-    input  wire        mem_wb_reg_write_i,  // Register write enable from MEM/WB
-    input  wire [4:0]  id_ex_rs1_addr_i,    // rs1 address from ID/EX
-    input  wire [4:0]  id_ex_rs2_addr_i,    // rs2 address from ID/EX
+    // 前遞輸入信號（從 EX/MEM 和 MEM/WB 階段）
+    input  wire [31:0] ex_mem_alu_result_i, // 來自 EX/MEM 管線暫存器的結果
+    input  wire [4:0]  ex_mem_rd_addr_i,    // 來自 EX/MEM 的目標暫存器
+    input  wire        ex_mem_reg_write_i,  // 來自 EX/MEM 的暫存器寫入啟用
+    input  wire [31:0] mem_wb_alu_result_i, // 來自 MEM/WB 管線暫存器的結果
+    input  wire [4:0]  mem_wb_rd_addr_i,    // 來自 MEM/WB 的目標暫存器
+    input  wire        mem_wb_reg_write_i,  // 來自 MEM/WB 的暫存器寫入啟用
+    input  wire [4:0]  id_ex_rs1_addr_i,    // 來自 ID/EX 的 rs1 位址
+    input  wire [4:0]  id_ex_rs2_addr_i,    // 來自 ID/EX 的 rs2 位址
 
-    // 前推選擇信號（從前推單元）
-    input  wire [1:0]  forward_a_sel_i,     // Selector for ALU operand A
-    input  wire [1:0]  forward_b_sel_i,     // Selector for ALU operand B
+    // 前遞選擇信號（來自前遞單元）
+    input  wire [1:0]  forward_a_sel_i,     // ALU 運算元 A 的選擇器
+    input  wire [1:0]  forward_b_sel_i,     // ALU 運算元 B 的選擇器
 
-    // Outputs to EX/MEM Pipeline Register
-    output wire [31:0] alu_result_o,   // Result from ALU or Multiplier
-    output wire        zero_flag_o     // Zero flag from ALU (for branch instructions)
-    // output wire [31:0] branch_target_addr_o, // Calculated branch target address (if done in EX)
+    // 輸出到 EX/MEM 管線暫存器
+    output wire [31:0] alu_result_o,   // 來自 ALU 或乘法器的結果
+    output wire        zero_flag_o     // 來自 ALU 的零旗標（用於分支指令）
+    // output wire [31:0] branch_target_addr_o, // 計算的分支目標位址（如果在 EX 階段完成）
 );
 
-    // 使用前推機制選擇正確的操作數
+    // 使用前遞機制選擇正確的操作數
     wire [31:0] forwarded_rs1_data;
     wire [31:0] forwarded_rs2_data;
     
-    // 根據前推選擇信號選擇rs1數據
+    // 根據前遞選擇信號選擇 rs1 資料
     assign forwarded_rs1_data = 
-        (forward_a_sel_i == 2'b01) ? ex_mem_alu_result_i :  // 從EX/MEM前推
-        (forward_a_sel_i == 2'b10) ? mem_wb_alu_result_i :  // 從MEM/WB前推
+        (forward_a_sel_i == 2'b01) ? ex_mem_alu_result_i :  // 從 EX/MEM 前遞
+        (forward_a_sel_i == 2'b10) ? mem_wb_alu_result_i :  // 從 MEM/WB 前遞
         rs1_data_i;                                         // 使用原始值
     
-    // 根據前推選擇信號選擇rs2數據
+    // 根據前遞選擇信號選擇 rs2 資料
     assign forwarded_rs2_data = 
-        (forward_b_sel_i == 2'b01) ? ex_mem_alu_result_i :  // 從EX/MEM前推
-        (forward_b_sel_i == 2'b10) ? mem_wb_alu_result_i :  // 從MEM/WB前推
+        (forward_b_sel_i == 2'b01) ? ex_mem_alu_result_i :  // 從 EX/MEM 前遞
+        (forward_b_sel_i == 2'b10) ? mem_wb_alu_result_i :  // 從 MEM/WB 前遞
         rs2_data_i;                                         // 使用原始值
 
-    // ALU操作數選擇
+    // ALU 操作數選擇
     wire [31:0] alu_operand_a;
     wire [31:0] alu_operand_b;
     wire [31:0] alu_result_internal;
     wire [31:0] mul_result_internal;
 
-    // 將前推后的操作數傳給ALU
+    // 將前遞後的操作數傳給 ALU
     assign alu_operand_a = forwarded_rs1_data;
     assign alu_operand_b = alu_src_i ? imm_ext_i : forwarded_rs2_data;
 
-    // ALU實例
+    // ALU 實例
     alu u_alu (
         .operand_a_i (alu_operand_a),
         .operand_b_i (alu_operand_b),
@@ -73,7 +73,7 @@ module ex_stage (
         .zero_flag_o (zero_flag_o)
     );
 
-    // 乘法器實例 - 直接使用前推后的數據
+    // 乘法器實例 - 直接使用前遞後的資料
     multiplier u_multiplier (
         .clk         (clk),
         .rst_n       (rst_n),

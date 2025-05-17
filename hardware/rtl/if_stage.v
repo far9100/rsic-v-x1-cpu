@@ -1,5 +1,5 @@
-// RISC-V 32IM CPU - Instruction Fetch (IF) Stage
-// File: hardware/rtl/if_stage.v
+// RISC-V 32IM CPU - 指令擷取（IF）階段
+// 檔案：hardware/rtl/if_stage.v
 
 `timescale 1ns / 1ps
 
@@ -7,42 +7,42 @@ module if_stage (
     input  wire        clk,
     input  wire        rst_n,
 
-    // Inputs for branch/jump handling (from MEM/EX stage or Hazard Unit)
-    // input  wire        pc_write_en,      // Enable PC update
-    // input  wire        branch_taken,     // Indicates if a branch is taken
-    // input  wire [31:0] branch_target_addr, // Target address for branch/jump
+    // 分支/跳躍處理的輸入（來自 MEM/EX 階段或危害單元）
+    // input  wire        pc_write_en,      // 啟用 PC 更新
+    // input  wire        branch_taken,     // 指示分支是否被採用
+    // input  wire [31:0] branch_target_addr, // 分支/跳躍的目標位址
 
-    // Instruction Memory Interface
-    output wire [31:0] i_mem_addr,       // Address to instruction memory
-    input  wire [31:0] i_mem_rdata,      // Instruction read from memory
+    // 指令記憶體介面
+    output wire [31:0] i_mem_addr,       // 指令記憶體位址
+    input  wire [31:0] i_mem_rdata,      // 從記憶體讀取的指令
 
-    // Outputs to IF/ID Pipeline Register
+    // 輸出到 IF/ID 管線暫存器
     output wire [31:0] if_id_pc_plus_4_o, // PC + 4
-    output wire [31:0] if_id_instr_o      // Fetched instruction
+    output wire [31:0] if_id_instr_o      // 擷取的指令
 );
 
-    reg [31:0] pc_reg; // Program Counter
+    reg [31:0] pc_reg; // 程式計數器
 
-    // PC update logic
+    // PC 更新邏輯
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            pc_reg <= 32'h00000000; // Reset PC to 0 (or specific start address)
+            pc_reg <= 32'h00000000; // 重置 PC 為 0（或特定起始位址）
         end else begin
-            // if (pc_write_en) begin // Controlled by Hazard Unit for stalls
+            // if (pc_write_en) begin // 由危害單元控制停滯
             //     if (branch_taken) begin
-            //         pc_reg <= branch_target_addr; // Jump or taken branch
+            //         pc_reg <= branch_target_addr; // 跳躍或採用分支
             //     end else begin
-            //         pc_reg <= pc_reg + 4;         // Sequential execution
+            //         pc_reg <= pc_reg + 4;         // 順序執行
             //     end
             // end
-            // Simplified: always increment PC by 4 for now
+            // 簡化：目前總是增加 PC 4
             pc_reg <= pc_reg + 4;
         end
     end
 
-    // Outputs
-    assign i_mem_addr = pc_reg;          // Send current PC to instruction memory
-    assign if_id_instr_o = i_mem_rdata;  // Pass fetched instruction to next stage
-    assign if_id_pc_plus_4_o = pc_reg + 4; // Calculate PC+4 for next stage (useful for branches/jumps)
+    // 輸出
+    assign i_mem_addr = pc_reg;          // 將當前 PC 送到指令記憶體
+    assign if_id_instr_o = i_mem_rdata;  // 將擷取的指令傳遞到下一階段
+    assign if_id_pc_plus_4_o = pc_reg + 4; // 計算下一階段的 PC+4（用於分支/跳躍）
 
 endmodule

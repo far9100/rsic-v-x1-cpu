@@ -1,5 +1,5 @@
-// RISC-V 32IM CPU - Register File
-// File: hardware/rtl/reg_file.v
+// RISC-V 32IM CPU - 暫存器檔案
+// 檔案：hardware/rtl/reg_file.v
 
 `timescale 1ns / 1ps
 
@@ -7,46 +7,46 @@ module reg_file (
     input  wire        clk,
     input  wire        rst_n,
 
-    // Read Ports
-    input  wire [4:0]  rs1_addr,       // Address for read port 1 (rs1)
-    input  wire [4:0]  rs2_addr,       // Address for read port 2 (rs2)
-    output wire [31:0] rs1_data,       // Data from read port 1
-    output wire [31:0] rs2_data,       // Data from read port 2
+    // 讀取埠
+    input  wire [4:0]  rs1_addr,       // 讀取埠 1 的位址（rs1）
+    input  wire [4:0]  rs2_addr,       // 讀取埠 2 的位址（rs2）
+    output wire [31:0] rs1_data,       // 讀取埠 1 的資料
+    output wire [31:0] rs2_data,       // 讀取埠 2 的資料
 
-    // Write Port (from WB stage)
-    input  wire [4:0]  rd_addr,        // Address for write port (rd)
-    input  wire [31:0] rd_data,        // Data to write
-    input  wire        wen             // Write enable
+    // 寫入埠（來自 WB 階段）
+    input  wire [4:0]  rd_addr,        // 寫入埠的位址（rd）
+    input  wire [31:0] rd_data,        // 要寫入的資料
+    input  wire        wen             // 寫入致能
 );
 
-    // 32 registers, each 32 bits wide
+    // 32 個暫存器，每個 32 位元寬
     reg [31:0] registers [0:31];
 
     integer i;
 
-    // Write operation (synchronous)
-    // Occurs on the positive edge of the clock if write enable is high
-    // and rd_addr is not x0.
+    // 寫入操作（同步）
+    // 在時脈正緣且寫入致能為高時執行
+    // 且 rd_addr 不為 x0
     always @(posedge clk) begin
-        if (wen && (rd_addr != 5'b00000)) begin // Do not write to x0
+        if (wen && (rd_addr != 5'b00000)) begin // 不寫入 x0
             registers[rd_addr] <= rd_data;
-            // $display("REG WRITE: x%0d = %h", rd_addr, rd_data);
+            // $display("暫存器寫入：x%0d = %h", rd_addr, rd_data);
         end
     end
 
-    // Read operations (asynchronous)
-    // x0 always reads as 0.
+    // 讀取操作（非同步）
+    // x0 永遠讀取為 0
     assign rs1_data = (rs1_addr == 5'b00000) ? 32'b0 : registers[rs1_addr];
     assign rs2_data = (rs2_addr == 5'b00000) ? 32'b0 : registers[rs2_addr];
 
-    // Debug output for register reads
+    // 暫存器讀取的除錯輸出
     // always @(*) begin
-    //     if (rs1_addr != 0) $display("REG READ: rs1_addr=%0d, data=%h", rs1_addr, registers[rs1_addr]);
-    //     if (rs2_addr != 0) $display("REG READ: rs2_addr=%0d, data=%h", rs2_addr, registers[rs2_addr]);
+    //     if (rs1_addr != 0) $display("暫存器讀取：rs1_addr=%0d, data=%h", rs1_addr, registers[rs1_addr]);
+    //     if (rs2_addr != 0) $display("暫存器讀取：rs2_addr=%0d, data=%h", rs2_addr, registers[rs2_addr]);
     // end
 
-    // Reset logic (optional, can be part of initialization in simulation)
-    // For synthesis, explicit reset might be desired.
+    // 重置邏輯（可選，可作為模擬中的初始化部分）
+    // 對於合成，可能需要明確的重置
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             for (i = 0; i < 32; i = i + 1) begin
