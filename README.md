@@ -15,8 +15,6 @@
 - **整合測試 (Integrated Tests):** 針對ADD和MUL指令集的綜合測試。
   - `tests/asm_sources/add_integrated_test.asm`: 加法指令整合測試。
   - `tests/asm_sources/mul_integrated_test.asm`: 乘法指令整合測試。
-  - `run_add_test.sh`: 執行加法指令整合測試的腳本。
-  - `run_mul_test.sh`: 執行乘法指令整合測試的腳本。
 
 ## 開發工具
 
@@ -42,63 +40,61 @@
 
 ## 測試與模擬指令
 
-以下步驟說明如何轉譯組合語言程式並使用 iVerilog 進行模擬：
+以下步驟說明如何在 Windows 系統上執行 CPU 測試：
+
+### 加法指令測試
 
 1. **轉譯組合語言程式:**
-    使用 `assembler/assembler.py` 將測試用的組合語言檔案 (例如 `tests/asm_sources/add_test.asm`) 轉譯成十六進制機器碼檔案。
+    使用 Python 組譯器將加法測試的組合語言檔案轉譯成十六進制機器碼檔案。
 
-    ```bash
-    python3 assembler/assembler.py tests/asm_sources/add_integrated_test.asm -o tests/hex_outputs/add_integrated_test.hex
+    ```powershell
+    python assembler/assembler.py tests/asm_sources/add_integrated_test.asm -o tests/hex_outputs/add_integrated_test.hex
     ```
 
-    您可以替換檔案名稱來測試其他程式。
-
 2. **編譯 Verilog 原始碼與測試平台:**
-    使用 iVerilog 編譯所有相關的 Verilog 檔案。請確保您在專案的根目錄下執行此指令。
+    使用 iVerilog 編譯所有相關的 Verilog 檔案。
 
-    ```bash
+    ```powershell
     iverilog -o add_sim hardware/sim/tb_add_test.v hardware/rtl/*.v
     ```
 
-    這會產生一個名為 `add_sim` 的可執行檔。
-
 3. **執行模擬:**
-    執行先前編譯產生的檔案。
+    執行編譯後的模擬檔。
 
-    ```bash
+    ```powershell
     vvp add_sim
     ```
 
-    模擬過程中的輸出訊息 (例如 `$display` 內容) 將會顯示在終端機上。
-
 4. **查看波形 (可選):**
-    測試平台已設定會產生一個波形檔案。您可以使用波形查看工具 (如 GTKWave) 開啟此檔案來觀察訊號變化。
+    使用 GTKWave 開啟生成的波形檔案。
 
-    ```bash
+    ```powershell
     gtkwave tb_add_test.vcd
     ```
 
-## 整合測試腳本
+### 乘法指令測試
 
-本專案提供了兩個整合測試腳本，可自動執行上述步驟：
-
-1. **加法指令整合測試:**
-
-    ```bash
-    ./run_add_test.sh
+1. **轉譯組合語言程式:**
+    ```powershell
+    python assembler/assembler.py tests/asm_sources/mul_integrated_test.asm -o tests/hex_outputs/mul_integrated_test.hex
     ```
 
-    此腳本會自動轉譯加法測試程式，編譯測試平台，並執行模擬。測試結果將顯示於終端機上。
-
-2. **乘法指令整合測試:**
-
-    ```bash
-    ./run_mul_test.sh
+2. **編譯 Verilog 原始碼與測試平台:**
+    ```powershell
+    iverilog -o mul_sim hardware/sim/tb_mul_test.v hardware/rtl/*.v
     ```
 
-    此腳本會自動轉譯乘法測試程式，編譯測試平台，並執行模擬。測試結果將顯示於終端機上。
+3. **執行模擬:**
+    ```powershell
+    vvp mul_sim
+    ```
+
+4. **查看波形 (可選):**
+    ```powershell
+    gtkwave tb_mul_test.vcd
+    ```
 
 **注意:**
-
-- 在實際執行前，請確保您已安裝 Python 3 和 iVerilog。
-- 執行腳本前，請確保腳本具有執行權限 (`chmod +x run_*.sh`)。
+- 在執行測試前，請確保已安裝 Python 3 和 iVerilog。
+- 每個步驟執行後，請確認是否有錯誤訊息。
+- 如果遇到問題，請檢查相關檔案是否存在於正確的目錄中。
