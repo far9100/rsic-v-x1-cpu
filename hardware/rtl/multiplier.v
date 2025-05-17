@@ -64,7 +64,7 @@ module multiplier (
         // The encoding must match what control_unit provides via alu_op_o.
         case (mul_op_i) // This should match the `define for ALU_OP_MUL etc.
             `ALU_OP_MUL: begin // MUL: Lower 32 bits of rs1 * rs2
-                result_o = product_unsigned_unsigned[31:0];
+                result_o = product_signed_signed[31:0];
             end
             // Add cases for MULH, MULHSU, MULHU if this module handles them
             // For example, if `ALU_OP_MULH` was defined as 4'b1011:
@@ -84,7 +84,7 @@ module multiplier (
                 // For now, if it's not MUL, output undefined.
                 // This implies ex_stage selects between ALU and Multiplier output.
                 if (mul_op_i == `ALU_OP_MUL) begin // Redundant check if case is exhaustive
-                     result_o = product_unsigned_unsigned[31:0];
+                     result_o = product_signed_signed[31:0];
                 end else begin
                      result_o = 32'hxxxxxxxx; // Not a recognized multiply op for this simple version
                 end

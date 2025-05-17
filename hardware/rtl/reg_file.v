@@ -30,6 +30,7 @@ module reg_file (
     always @(posedge clk) begin
         if (wen && (rd_addr != 5'b00000)) begin // Do not write to x0
             registers[rd_addr] <= rd_data;
+            // $display("REG WRITE: x%0d = %h", rd_addr, rd_data);
         end
     end
 
@@ -37,6 +38,12 @@ module reg_file (
     // x0 always reads as 0.
     assign rs1_data = (rs1_addr == 5'b00000) ? 32'b0 : registers[rs1_addr];
     assign rs2_data = (rs2_addr == 5'b00000) ? 32'b0 : registers[rs2_addr];
+
+    // Debug output for register reads
+    // always @(*) begin
+    //     if (rs1_addr != 0) $display("REG READ: rs1_addr=%0d, data=%h", rs1_addr, registers[rs1_addr]);
+    //     if (rs2_addr != 0) $display("REG READ: rs2_addr=%0d, data=%h", rs2_addr, registers[rs2_addr]);
+    // end
 
     // Reset logic (optional, can be part of initialization in simulation)
     // For synthesis, explicit reset might be desired.

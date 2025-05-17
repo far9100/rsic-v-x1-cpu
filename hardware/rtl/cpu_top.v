@@ -53,6 +53,9 @@ module cpu_top (
     wire [1:0]  ex_mem_mem_to_reg_ctrl;
     wire [31:0] id_ex_pc_plus_4_for_jalr_jal; // Placeholder for PC+4 for JAL/JALR
 
+    // Forwarding Unit signals
+    wire [1:0] forward_a_sel;
+    wire [1:0] forward_b_sel;
 
     // Wires connecting pipeline stages (original declarations, some might be covered above)
     // IF/ID
@@ -92,15 +95,6 @@ module cpu_top (
     // Control signals for WB
     wire        mem_wb_reg_write;
     wire [1:0]  mem_wb_mem_to_reg;
-
-    // Forwarding Unit signals (Example)
-    // wire [1:0] forward_a_sel;
-    // wire [1:0] forward_b_sel;
-
-    // Hazard Detection Unit signals (Example)
-    // wire        pc_write_en;
-    // wire        if_id_write_en;
-    // wire        id_ex_bubble; // or stall
 
     // Assign id_ex_pc_plus_4_for_jalr_jal (simplified)
     assign id_ex_pc_plus_4_for_jalr_jal = id_ex_pc_plus_4;
@@ -211,21 +205,24 @@ module cpu_top (
         .imm_ext_i      (ex_mem_imm_ext),
         .alu_src_i      (ex_mem_alu_src),
         .alu_op_i       (ex_mem_alu_op),
-        // .pc_plus_4_i    (ex_mem_pc_plus_4), // For branch calculation if done here
-        // .rs1_addr_i     (ex_mem_rs1_addr), // For forwarding logic
-        // .rs2_addr_i     (ex_mem_rs2_addr), // For forwarding logic
+        .rd_addr_i      (ex_mem_rd_addr_for_ex), // Pass destination register address
 
-        // Forwarding Unit inputs
-        // .ex_mem_reg_write_i (ex_mem_reg_write_fwd), // from EX/MEM reg (previous instr)
-        // .ex_mem_rd_addr_i   (ex_mem_rd_addr_fwd),   // from EX/MEM reg
-        // .mem_wb_reg_write_i (mem_wb_reg_write_fwd), // from MEM/WB reg (instr before previous)
-        // .mem_wb_rd_addr_i   (mem_wb_rd_addr_fwd),   // from MEM/WB reg
-        // .forward_a_sel_i (forward_a_sel),
-        // .forward_b_sel_i (forward_b_sel),
+        // Connect forwarding inputs for data hazard resolution
+        .ex_mem_alu_result_i(mem_wb_alu_result_from_exmem), // Result from EX/MEM pipeline register
+        .ex_mem_rd_addr_i  (mem_wb_rd_addr_from_exmem),    // Destination register from EX/MEM
+        .ex_mem_reg_write_i(mem_wb_reg_write_ctrl_from_exmem), // Register write enable from EX/MEM
+        .mem_wb_alu_result_i(mem_wb_alu_result),           // Result from MEM/WB pipeline register
+        .mem_wb_rd_addr_i  (mem_wb_rd_addr),               // Destination register from MEM/WB
+        .mem_wb_reg_write_i(mem_wb_reg_write),             // Register write enable from MEM/WB
+        .id_ex_rs1_addr_i  (ex_mem_rs1_addr),              // rs1 address from ID/EX
+        .id_ex_rs2_addr_i  (ex_mem_rs2_addr),              // rs2 address from ID/EX
+        
+        // Connect forwarding select signals from forwarding unit
+        .forward_a_sel_i  (forward_a_sel),
+        .forward_b_sel_i  (forward_b_sel),
 
         .alu_result_o   (ex_mem_alu_result_pre_fwd),
         .zero_flag_o    (ex_zero_flag) // For branch condition
-        // .branch_target_addr_o (ex_branch_target_addr) // If branch calc in EX
     );
 
     //------------------------------------------------------------------------
@@ -235,7 +232,7 @@ module cpu_top (
         .clk            (clk),
         .rst_n          (rst_n),
         .ex_alu_result_i(ex_mem_alu_result_pre_fwd),
-        .ex_rs2_data_i  (ex_mem_rs2_data_for_store), // rs2_data for sw, from ID/EX
+        .ex_rs2_data_i  (ex_mem_rs2_data_for_alu), // rs2_data for sw, from ID/EX
         .ex_rd_addr_i   (ex_mem_rd_addr_for_ex),    // CORRECTED: rd_addr from ID/EX's output ex_mem_rd_addr_for_ex
         .ex_zero_flag_i (ex_zero_flag),              // For branch decision in MEM or later
         .ex_mem_read_i  (ex_mem_mem_read_ctrl),
@@ -329,21 +326,21 @@ module cpu_top (
     // assign id_ex_bubble = id_ex_bubble_ctrl; // Connect to ID/EX register's bubble/stall input
 
     //------------------------------------------------------------------------
-    // Forwarding Unit (Placeholder)
+    // Forwarding Unit
     //------------------------------------------------------------------------
-    // forwarding_unit u_forwarding_unit (
-    //     .clk                (clk),
-    //     .rst_n              (rst_n),
-    //     .ex_mem_reg_write_i (ex_mem_reg_write), // From EX/MEM pipeline register
-    //     .ex_mem_rd_addr_i   (ex_mem_rd_addr),   // From EX/MEM pipeline register
-    //     .mem_wb_reg_write_i (mem_wb_reg_write), // From MEM/WB pipeline register
-    //     .mem_wb_rd_addr_i   (mem_wb_rd_addr),   // From MEM/WB pipeline register
-    //     .id_ex_rs1_addr_i   (id_ex_rs1_addr),   // rs1 of current instr in EX (from ID/EX reg)
-    //     .id_ex_rs2_addr_i   (id_ex_rs2_addr),   // rs2 of current instr in EX (from ID/EX reg)
+    forwarding_unit u_forwarding_unit (
+        .clk                (clk),
+        .rst_n              (rst_n),
+        .ex_mem_reg_write_i (mem_wb_reg_write_ctrl_from_exmem), // From EX/MEM pipeline register
+        .ex_mem_rd_addr_i   (mem_wb_rd_addr_from_exmem),   // From EX/MEM pipeline register
+        .mem_wb_reg_write_i (mem_wb_reg_write), // From MEM/WB pipeline register
+        .mem_wb_rd_addr_i   (mem_wb_rd_addr),   // From MEM/WB pipeline register
+        .id_ex_rs1_addr_i   (ex_mem_rs1_addr),   // rs1 of current instr in EX (from ID/EX reg)
+        .id_ex_rs2_addr_i   (ex_mem_rs2_addr),   // rs2 of current instr in EX (from ID/EX reg)
 
-    //     .forward_a_sel_o   (forward_a_sel),    // To EX stage mux for rs1
-    //     .forward_b_sel_o   (forward_b_sel)     // To EX stage mux for rs2
-    // );
+        .forward_a_sel_o   (forward_a_sel),    // To EX stage mux for rs1
+        .forward_b_sel_o   (forward_b_sel)     // To EX stage mux for rs2
+    );
 
     // Temporary assignments for signals that would come from Hazard/Forwarding or are complex
     // These should be properly driven by Hazard Detection and Control Logic

@@ -48,18 +48,25 @@ module id_stage (
     wire [4:0]  rs2     = instr_i[24:20];
     wire [6:0]  funct7  = instr_i[31:25];
 
-    // Register File instance
+    // Register File
     reg_file u_reg_file (
-        .clk     (clk),
-        .rst_n   (rst_n),
-        .rs1_addr(rs1),
-        .rs2_addr(rs2),
-        .rd_addr (wb_rd_addr_i), // Write address comes from WB stage
-        .rd_data (wb_data_i),    // Write data comes from WB stage
-        .wen     (wb_reg_write_i),// Write enable comes from WB stage
-        .rs1_data(rs1_data_o),
-        .rs2_data(rs2_data_o)
+        .clk         (clk),
+        .rst_n       (rst_n),
+        .rs1_addr    (instr_i[19:15]),
+        .rs2_addr    (instr_i[24:20]),
+        .rd_addr     (wb_rd_addr_i),
+        .rd_data     (wb_data_i),
+        .wen         (wb_reg_write_i),
+        .rs1_data    (rs1_data_o),
+        .rs2_data    (rs2_data_o)
     );
+
+    // Debug printout for register values after write
+    // always @(posedge clk) begin
+    //     if (wb_reg_write_i) begin
+    //         $display("DEBUG REG WRITE: rd_addr=%h, rd_data=%h", wb_rd_addr_i, wb_data_i);
+    //     end
+    // end
 
     // Immediate Generator instance
     immediate_generator u_imm_gen (
@@ -71,15 +78,22 @@ module id_stage (
     control_unit u_control_unit (
         .opcode      (opcode),
         .funct3      (funct3),
-        .funct7      (funct7), // For add/sub/mul differentiation etc.
+        .funct7      (funct7),
         .alu_src_o   (alu_src_o),
         .alu_op_o    (alu_op_o),
         .mem_read_o  (mem_read_o),
         .mem_write_o (mem_write_o),
         .reg_write_o (reg_write_o),
         .mem_to_reg_o(mem_to_reg_o)
-        // Add branch control signals if branch decision is made in ID
     );
+
+    // Debug output for when MUL instruction is processed
+    // always @(*) begin
+    //     if (opcode == 7'b0110011 && funct3 == 3'b000 && funct7 == 7'b0000001) begin
+    //         $display("DEBUG ID MUL: rs1_addr=%h, rs2_addr=%h, rs1_data=%h, rs2_data=%h, alu_op=%h", 
+    //                 instr_i[19:15], instr_i[24:20], rs1_data_o, rs2_data_o, alu_op_o);
+    //     end
+    // end
 
     // Pass through PC+4
     assign id_pc_plus_4_o = pc_plus_4_i;
