@@ -21,6 +21,9 @@ module pipeline_reg_ex_mem (
     // WB 控制
     input  wire        ex_reg_write_i,
     input  wire [1:0]  ex_mem_to_reg_i,
+    // 分支和跳躍控制
+    input  wire        ex_branch_i,
+    input  wire        ex_jump_i,
 
     // 輸出到 MEM 階段（資料路徑）
     output reg [31:0] mem_alu_result_o,
@@ -34,7 +37,10 @@ module pipeline_reg_ex_mem (
     output reg        mem_mem_write_o,
     // WB 控制（傳遞到 MEM/WB 暫存器）
     output reg        mem_reg_write_o,
-    output reg [1:0]  mem_mem_to_reg_o
+    output reg [1:0]  mem_mem_to_reg_o,
+    // 分支和跳躍控制
+    output reg        mem_branch_o,
+    output reg        mem_jump_o
 );
 
     // 氣泡（NOP）的預設控制信號
@@ -42,6 +48,8 @@ module pipeline_reg_ex_mem (
     localparam NOP_MEM_WRITE  = 1'b0;
     localparam NOP_REG_WRITE  = 1'b0;
     localparam [1:0] NOP_MEM_TO_REG = 2'b00;
+    localparam NOP_BRANCH     = 1'b0;
+    localparam NOP_JUMP       = 1'b0;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -55,6 +63,8 @@ module pipeline_reg_ex_mem (
             mem_mem_write_o  <= NOP_MEM_WRITE;
             mem_reg_write_o  <= NOP_REG_WRITE;
             mem_mem_to_reg_o <= NOP_MEM_TO_REG;
+            mem_branch_o     <= NOP_BRANCH;
+            mem_jump_o       <= NOP_JUMP;
         end
         // else if (ex_mem_flush_en) begin // 如果因分支預測錯誤等原因需要清除
         //     // 插入 NOP（或等效的氣泡）
@@ -67,6 +77,8 @@ module pipeline_reg_ex_mem (
         //     mem_mem_write_o  <= NOP_MEM_WRITE;
         //     mem_reg_write_o  <= NOP_REG_WRITE; // 關鍵：NOP 不寫入暫存器
         //     mem_mem_to_reg_o <= NOP_MEM_TO_REG;
+        //     mem_branch_o     <= NOP_BRANCH;
+        //     mem_jump_o       <= NOP_JUMP;
         // end
         else begin // 正常運作：鎖存輸入
             mem_alu_result_o <= ex_alu_result_i;
@@ -78,6 +90,8 @@ module pipeline_reg_ex_mem (
             mem_mem_write_o  <= ex_mem_write_i;
             mem_reg_write_o  <= ex_reg_write_i;
             mem_mem_to_reg_o <= ex_mem_to_reg_i;
+            mem_branch_o     <= ex_branch_i;
+            mem_jump_o       <= ex_jump_i;
         end
     end
 

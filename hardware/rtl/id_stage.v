@@ -34,7 +34,10 @@ module id_stage (
     output wire        mem_write_o,    // 記憶體寫入啟用
     // WB 階段的控制信號（通過 EX、MEM 階段）
     output wire        reg_write_o,    // 暫存器寫入啟用
-    output wire [1:0]  mem_to_reg_o    // 寫回資料來源（00：ALU，01：記憶體，10：PC+4 用於 JAL/JALR）
+    output wire [1:0]  mem_to_reg_o,   // 寫回資料來源（00：ALU，01：記憶體，10：PC+4 用於 JAL/JALR）
+    // 分支和跳躍控制信號
+    output wire        branch_o,       // 分支指令標誌
+    output wire        jump_o          // 跳躍指令標誌
 
     // 輸出到危害單元（如果在這裡檢測到因載入指令的資料相依性而需要停滯）
     // output wire        id_stall_o
@@ -84,7 +87,9 @@ module id_stage (
         .mem_read_o  (mem_read_o),
         .mem_write_o (mem_write_o),
         .reg_write_o (reg_write_o),
-        .mem_to_reg_o(mem_to_reg_o)
+        .mem_to_reg_o(mem_to_reg_o),
+        .branch_o    (branch_o),      // 分支指令標誌
+        .jump_o      (jump_o)         // 跳躍指令標誌
     );
 
     // MUL 指令處理時的除錯輸出

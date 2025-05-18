@@ -28,6 +28,9 @@ module pipeline_reg_id_ex (
     // WB 控制
     input  wire        id_reg_write_i,
     input  wire [1:0]  id_mem_to_reg_i,
+    // 分支和跳躍控制
+    input  wire        id_branch_i,
+    input  wire        id_jump_i,
 
     // 輸出到 EX 階段（資料路徑）
     output reg [31:0] ex_pc_plus_4_o,
@@ -47,7 +50,10 @@ module pipeline_reg_id_ex (
     output reg        ex_mem_write_o,
     // WB 控制（傳遞到 EX/MEM 和 MEM/WB 暫存器）
     output reg        ex_reg_write_o,
-    output reg [1:0]  ex_mem_to_reg_o
+    output reg [1:0]  ex_mem_to_reg_o,
+    // 分支和跳躍控制
+    output reg        ex_branch_o,
+    output reg        ex_jump_o
 );
 
     // 氣泡（NOP）的預設控制信號
@@ -57,6 +63,8 @@ module pipeline_reg_id_ex (
     localparam NOP_MEM_WRITE  = 1'b0;
     localparam NOP_REG_WRITE  = 1'b0;
     localparam [1:0] NOP_MEM_TO_REG = 2'b00;
+    localparam NOP_BRANCH     = 1'b0;
+    localparam NOP_JUMP       = 1'b0;
 
 
     always @(posedge clk or negedge rst_n) begin
@@ -76,6 +84,8 @@ module pipeline_reg_id_ex (
             ex_mem_write_o  <= NOP_MEM_WRITE;
             ex_reg_write_o  <= NOP_REG_WRITE;
             ex_mem_to_reg_o <= NOP_MEM_TO_REG;
+            ex_branch_o     <= NOP_BRANCH;
+            ex_jump_o       <= NOP_JUMP;
         end
         // else if (id_ex_flush_en || id_ex_bubble_i) begin // 如果需要清除或插入氣泡
         //     // 插入 NOP（或等效的氣泡）
@@ -93,6 +103,8 @@ module pipeline_reg_id_ex (
         //     ex_mem_write_o  <= NOP_MEM_WRITE;
         //     ex_reg_write_o  <= NOP_REG_WRITE; // 關鍵：NOP 不寫入暫存器
         //     ex_mem_to_reg_o <= NOP_MEM_TO_REG;
+        //     ex_branch_o     <= NOP_BRANCH;
+        //     ex_jump_o       <= NOP_JUMP;
         // end
         else begin // 正常運作：鎖存輸入
             ex_pc_plus_4_o  <= id_pc_plus_4_i;
@@ -109,6 +121,8 @@ module pipeline_reg_id_ex (
             ex_mem_write_o  <= id_mem_write_i;
             ex_reg_write_o  <= id_reg_write_i;
             ex_mem_to_reg_o <= id_mem_to_reg_i;
+            ex_branch_o     <= id_branch_i;
+            ex_jump_o       <= id_jump_i;
         end
     end
 

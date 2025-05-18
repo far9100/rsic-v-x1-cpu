@@ -8,9 +8,9 @@ module if_stage (
     input  wire        rst_n,
 
     // 分支/跳躍處理的輸入（來自 MEM/EX 階段或危害單元）
-    // input  wire        pc_write_en,      // 啟用 PC 更新
-    // input  wire        branch_taken,     // 指示分支是否被採用
-    // input  wire [31:0] branch_target_addr, // 分支/跳躍的目標位址
+    input  wire        pc_write_en,      // 啟用 PC 更新
+    input  wire        branch_taken,     // 指示分支是否被採用
+    input  wire [31:0] branch_target_addr, // 分支/跳躍的目標位址
 
     // 指令記憶體介面
     output wire [31:0] i_mem_addr,       // 指令記憶體位址
@@ -28,15 +28,14 @@ module if_stage (
         if (!rst_n) begin
             pc_reg <= 32'h00000000; // 重置 PC 為 0（或特定起始位址）
         end else begin
-            // if (pc_write_en) begin // 由危害單元控制停滯
-            //     if (branch_taken) begin
-            //         pc_reg <= branch_target_addr; // 跳躍或採用分支
-            //     end else begin
-            //         pc_reg <= pc_reg + 4;         // 順序執行
-            //     end
-            // end
-            // 簡化：目前總是增加 PC 4
-            pc_reg <= pc_reg + 4;
+            if (pc_write_en) begin // 由危害單元控制停滯
+                if (branch_taken) begin
+                    pc_reg <= branch_target_addr; // 跳躍或採用分支
+                end else begin
+                    pc_reg <= pc_reg + 4;         // 順序執行
+                end
+            end
+            // 當 pc_write_en=0 時，PC 保持不變（停滯）
         end
     end
 

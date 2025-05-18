@@ -11,7 +11,7 @@ module ex_stage (
     input  wire [31:0] rs1_data_i,     // 來源暫存器 1 的資料
     input  wire [31:0] rs2_data_i,     // 來源暫存器 2 的資料
     input  wire [31:0] imm_ext_i,      // 符號擴展的立即值
-    // input  wire [31:0] pc_plus_4_i,    // PC + 4（用於分支目標計算，JALR）
+    input  wire [31:0] pc_plus_4_i,    // PC + 4（用於分支目標計算，JALR）
 
     // 來自 ID/EX 管線暫存器的輸入（控制信號）
     input  wire        alu_src_i,      // ALU 運算元 B 的來源（0：rs2_data，1：立即值）
@@ -35,7 +35,6 @@ module ex_stage (
     // 輸出到 EX/MEM 管線暫存器
     output wire [31:0] alu_result_o,   // 來自 ALU 或乘法器的結果
     output wire        zero_flag_o     // 來自 ALU 的零旗標（用於分支指令）
-    // output wire [31:0] branch_target_addr_o, // 計算的分支目標位址（如果在 EX 階段完成）
 );
 
     // 使用前遞機制選擇正確的操作數
@@ -64,36 +63,23 @@ module ex_stage (
     assign alu_operand_a = forwarded_rs1_data;
     assign alu_operand_b = alu_src_i ? imm_ext_i : forwarded_rs2_data;
 
+    // Debug signals for branch detection
+    always @(posedge clk) begin
+        if (rst_n) begin
+            if (alu_op_i == `ALU_OP_SUB && zero_flag_o) begin
+                $display("[EX STAGE] Branch condition TRUE: rs1_data=0x%h, rs2_data=0x%h, result=%b", 
+                          forwarded_rs1_data, forwarded_rs2_data, zero_flag_o);
+            end
+        end
+    end
+
     // ALU 實例
     alu u_alu (
         .operand_a_i (alu_operand_a),
         .operand_b_i (alu_operand_b),
         .alu_op_i    (alu_op_i),
-        .result_o    (alu_result_internal),
+        .result_o    (alu_result_o),
         .zero_flag_o (zero_flag_o)
     );
-
-    // 乘法器實例 - 直接使用前遞後的資料
-    multiplier u_multiplier (
-        .clk         (clk),
-        .rst_n       (rst_n),
-        .operand_a_i (forwarded_rs1_data),
-        .operand_b_i (forwarded_rs2_data),
-        .mul_op_i    (alu_op_i),
-        .result_o    (mul_result_internal)
-    );
-
-    // 除錯輸出
-    always @(posedge clk) begin
-        if (alu_op_i == 4'b1010) begin // ALU_OP_MUL
-            $display("DEBUG MUL: alu_op_i=%h, rs1_data_i=%h, rs2_data_i=%h, mul_result=%h", 
-                    alu_op_i, forwarded_rs1_data, forwarded_rs2_data, mul_result_internal);
-        end
-    end
-    
-    // 根據操作類型選擇輸出結果
-    assign alu_result_o = (alu_op_i == `ALU_OP_MUL) ? 
-                         mul_result_internal : 
-                         alu_result_internal;
 
 endmodule

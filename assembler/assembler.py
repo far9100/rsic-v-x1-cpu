@@ -218,9 +218,40 @@ def assemble_line(line_content, labels, current_address):
         machine_code = assemble_i_type(args[0], args[2], args[1], FUNCT3_LW, OPCODE_LOAD, labels, current_address)
     elif instr == 'sw': # sw rs2, offset(rs1) -> args: rs2, offset, rs1
         machine_code = assemble_s_type(args[2], args[0], args[1], FUNCT3_SW, OPCODE_STORE, labels, current_address)
+    # Branch instructions
     elif instr == 'beq': # beq rs1, rs2, label -> args: rs1, rs2, label
         machine_code = assemble_b_type(args[0], args[1], args[2], FUNCT3_BEQ, OPCODE_BRANCH, labels, current_address)
-    # Add more instructions here...
+    elif instr == 'bne': # bne rs1, rs2, label -> args: rs1, rs2, label
+        machine_code = assemble_b_type(args[0], args[1], args[2], FUNCT3_BNE, OPCODE_BRANCH, labels, current_address)
+    elif instr == 'blt': # blt rs1, rs2, label -> args: rs1, rs2, label
+        machine_code = assemble_b_type(args[0], args[1], args[2], FUNCT3_BLT, OPCODE_BRANCH, labels, current_address)
+    elif instr == 'bge': # bge rs1, rs2, label -> args: rs1, rs2, label
+        machine_code = assemble_b_type(args[0], args[1], args[2], FUNCT3_BGE, OPCODE_BRANCH, labels, current_address)
+    elif instr == 'bltu': # bltu rs1, rs2, label -> args: rs1, rs2, label
+        machine_code = assemble_b_type(args[0], args[1], args[2], FUNCT3_BLTU, OPCODE_BRANCH, labels, current_address)
+    elif instr == 'bgeu': # bgeu rs1, rs2, label -> args: rs1, rs2, label
+        machine_code = assemble_b_type(args[0], args[1], args[2], FUNCT3_BGEU, OPCODE_BRANCH, labels, current_address)
+    
+    # Jump instructions
+    elif instr == 'jal': # jal rd, label -> args: rd, label
+        rd_int = register_to_int(args[0])
+        offset = parse_immediate(args[1], labels, current_address, is_branch_or_jal=True)
+        
+        if not (-1048576 <= offset <= 1048574) or (offset % 2 != 0):
+            raise ValueError(f"JAL offset {offset} for label '{args[1]}' out of range or not even")
+        
+        # J-type immediate encoding
+        imm20 = (offset >> 20) & 0x1      # imm[20]
+        imm10_1 = (offset >> 1) & 0x3FF   # imm[10:1]
+        imm11 = (offset >> 11) & 0x1      # imm[11]
+        imm19_12 = (offset >> 12) & 0xFF  # imm[19:12]
+        
+        # Build the encoded immediate field correctly
+        encoded_imm = (imm20 << 31) | (imm19_12 << 12) | (imm11 << 20) | (imm10_1 << 21)
+        machine_code = encoded_imm | (rd_int << 7) | OPCODE_JAL
+    elif instr == 'jalr': # jalr rd, offset(rs1) -> args: rd, offset, rs1
+        machine_code = assemble_i_type(args[0], args[2], args[1], FUNCT3_ADDI, OPCODE_JALR, labels, current_address)
+    
     # SLLI, SRLI, SRAI (I-type, but shamt is in imm field)
     elif instr == 'slli': # slli rd, rs1, shamt
         shamt = int(args[2]) & 0x1F # shamt is 5 bits for RV32I

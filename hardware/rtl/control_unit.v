@@ -33,11 +33,11 @@ module control_unit (
 
     // WB 階段的控制訊號
     output reg        reg_write_o,    // 暫存器寫入啟用
-    output reg [1:0]  mem_to_reg_o    // 寫回資料來源（00：ALU，01：記憶體，10：PC+4 用於 JAL/JALR）
+    output reg [1:0]  mem_to_reg_o,   // 寫回資料來源（00：ALU，01：記憶體，10：PC+4 用於 JAL/JALR）
 
-    // 其他可能的控制訊號：
-    // output reg branch_o; // 如果是分支指令
-    // output reg jump_o;   // 如果是跳躍指令（JAL, JALR）
+    // 分支和跳躍控制訊號
+    output reg        branch_o,       // 如果是分支指令
+    output reg        jump_o          // 如果是跳躍指令（JAL, JALR）
 );
 
     // RISC-V 操作碼定義
@@ -59,6 +59,8 @@ module control_unit (
     localparam DEFAULT_MEM_WRITE  = 1'b0;
     localparam DEFAULT_REG_WRITE  = 1'b0;
     localparam DEFAULT_MEM_TO_REG = 2'b00;
+    localparam DEFAULT_BRANCH     = 1'b0;
+    localparam DEFAULT_JUMP       = 1'b0;
 
     always @(*) begin
         // 初始化為預設（安全）值
@@ -68,8 +70,8 @@ module control_unit (
         mem_write_o    = DEFAULT_MEM_WRITE;
         reg_write_o    = DEFAULT_REG_WRITE;
         mem_to_reg_o   = DEFAULT_MEM_TO_REG;
-        // branch_o       = 1'b0;
-        // jump_o         = 1'b0;
+        branch_o       = DEFAULT_BRANCH;
+        jump_o         = DEFAULT_JUMP;
 
         case (opcode)
             OPCODE_LOAD: begin // LW, LH, LB, LHU, LBU
@@ -164,14 +166,14 @@ module control_unit (
                 // ALU 運算取決於分支類型（用於比較的 SUB）
                 alu_op_o     = `ALU_OP_SUB; // 用於設置比較的旗標
                 reg_write_o  = 1'b0;   // 分支指令不寫入暫存器
-                // branch_o     = 1'b1;
+                branch_o     = 1'b1;   // 啟用分支評估
             end
             OPCODE_JALR: begin
                 alu_src_o    = 1'b1; // 立即值用於偏移量
                 alu_op_o     = `ALU_OP_ADD; // rs1 + 偏移量
                 reg_write_o  = 1'b1;
                 mem_to_reg_o = 2'b10; // PC + 4
-                // jump_o       = 1'b1;
+                jump_o       = 1'b1;   // 啟用跳躍
             end
             OPCODE_JAL: begin
                 // JAL 嚴格來說不需要 ALU 來計算目標位址，但需要寫入 PC+4
@@ -182,7 +184,7 @@ module control_unit (
                 alu_op_o     = `ALU_OP_ADD; // 無關緊要
                 reg_write_o  = 1'b1;
                 mem_to_reg_o = 2'b10; // PC + 4
-                // jump_o       = 1'b1;
+                jump_o       = 1'b1;   // 啟用跳躍
             end
             // OPCODE_SYSTEM: begin // CSR 指令，FENCE - 較複雜
             //     // 如果實作了 CSR，則處理它
