@@ -10,11 +10,12 @@
 - **轉譯器 (Assembler):** 使用 Python 撰寫的組合語言轉譯器，可將 RISC-V 組合語言程式轉譯成處理器可執行的機器碼。
   - `assembler/assembler.py`: 轉譯器腳本。
 - **測試程式 (Tests):** 用於驗證處理器功能的 RISC-V 組合語言程式。
-  - `tests/asm_sources/`: 存放組合語言原始檔 (.asm)。
-  - `tests/hex_outputs/`: 存放由轉譯器產生的十六進制機器碼檔案 (.hex)。
-- **整合測試 (Integrated Tests):** 針對ADD和MUL指令集的綜合測試。
-  - `tests/asm_sources/add_integrated_test.asm`: 加法指令整合測試。
-  - `tests/asm_sources/mul_integrated_test.asm`: 乘法指令整合測試。
+  - `hardware/sim/tests/asm_sources/`: 存放組合語言原始檔 (.asm)。
+  - `hardware/sim/tests/hex_outputs/`: 存放由轉譯器產生的十六進制機器碼檔案 (.hex)。
+- **整合測試 (Integrated Tests):** 針對ADD、MUL和分支指令集的綜合測試。
+  - `hardware/sim/tests/asm_sources/add_integrated_test.asm`: 加法指令整合測試。
+  - `hardware/sim/tests/asm_sources/mul_integrated_test.asm`: 乘法指令整合測試。
+  - `hardware/sim/tests/asm_sources/branch_integrated_test.asm`: 分支指令整合測試。
 
 ## 開發工具
 
@@ -48,7 +49,7 @@
     使用 Python 組譯器將加法測試的組合語言檔案轉譯成十六進制機器碼檔案。
 
     ```powershell
-    python assembler/assembler.py tests/asm_sources/add_integrated_test.asm -o tests/hex_outputs/add_integrated_test.hex
+    python assembler/assembler.py hardware/sim/tests/asm_sources/add_integrated_test.asm -o hardware/sim/tests/hex_outputs/add_integrated_test.hex
     ```
 
 2. **編譯 Verilog 原始碼與測試平台:**
@@ -76,7 +77,7 @@
 
 1. **轉譯組合語言程式:**
     ```powershell
-    python assembler/assembler.py tests/asm_sources/mul_integrated_test.asm -o tests/hex_outputs/mul_integrated_test.hex
+    python assembler/assembler.py hardware/sim/tests/asm_sources/mul_integrated_test.asm -o hardware/sim/tests/hex_outputs/mul_integrated_test.hex
     ```
 
 2. **編譯 Verilog 原始碼與測試平台:**
@@ -100,18 +101,17 @@
 
 1. **轉譯組合語言程式:**
     ```powershell
-    python assembler/assembler.py tests/asm_sources/branch_integrated_test.asm -o tests/hex_outputs/branch_integrated_test.hex
+    python assembler/assembler.py hardware/sim/tests/asm_sources/branch_integrated_test.asm -o hardware/sim/tests/hex_outputs/branch_integrated_test.hex
     ```
 
 2. **確保測試文件存在於正確位置:**
     ```powershell
     # 確認hex檔案已經成功生成
-    ls tests/hex_outputs/branch_integrated_test.hex
+    ls hardware/sim/tests/hex_outputs/branch_integrated_test.hex
     ```
 
 3. **編譯 Verilog 原始碼與測試平台:**
     ```powershell
-    # 必須從專案根目錄執行此命令
     iverilog -o branch_test hardware/sim/tb_branch_test.v hardware/rtl/*.v
     ```
 
@@ -146,12 +146,3 @@
 - 在執行測試前，請確保已安裝 Python 3 和 iVerilog。
 - 路徑使用`./tests/hex_outputs/branch_integrated_test.hex`相對路徑。
 - 每個步驟執行後，請確認是否有錯誤訊息。
-- 2024-06-20更新：測試結果判斷標準已更新，現在使用1表示測試通過，0表示測試失敗。
-
-## 偵錯與疑難排解
-
-若遇到分支測試失敗的情況，可能的原因包括：
-
-1. **中文字元顯示問題**: 終端窗口可能無法正確顯示中文字元，但只要查看值（如 `值=0`）即可判斷測試結果。
-2. **相對路徑問題**: 確保路徑使用 `./tests/hex_outputs/branch_integrated_test.hex` 格式，而非舊版的不含前導 `./` 的路徑。
-3. **分支預測與跳轉實作**: 若測試結果顯示為失敗，可能需要檢查CPU中的分支預測和跳轉指令實作是否有誤。
