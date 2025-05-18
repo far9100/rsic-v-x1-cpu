@@ -272,7 +272,7 @@ module cpu_top (
     pipeline_reg_mem_wb u_pipeline_reg_mem_wb (
         .clk            (clk),
         .rst_n          (rst_n),
-        .mem_mem_rdata_i(mem_wb_mem_rdata_from_mem),
+        .mem_rdata_i    (mem_wb_mem_rdata_from_mem),
         .mem_alu_result_i(mem_wb_alu_result_from_exmem),
         .mem_rd_addr_i  (mem_wb_rd_addr_from_exmem),
         .mem_reg_write_i(mem_wb_reg_write_ctrl_from_exmem),
