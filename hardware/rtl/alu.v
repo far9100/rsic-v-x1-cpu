@@ -58,8 +58,6 @@ module alu (
     end
 
     // 零值旗標計算
-    // assign zero_flag_o = (result_o == 32'b0);
-    // 組合邏輯區塊用於零值旗標，確保它基於最終的 result_o
     always @(*) begin
         if (result_o == 32'b0) begin
             zero_flag_o = 1'b1;

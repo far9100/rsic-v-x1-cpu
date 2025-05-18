@@ -112,7 +112,7 @@ module tb_branch_test;
                     if (d_mem_addr >= 256 && d_mem_addr <= 304) begin
                         $display(">>> TEST RESULT WRITE: Test=%0d, Data=%0d, Pass=%s", 
                                  (d_mem_addr - 256)/4, d_mem_wdata, 
-                                 (d_mem_wdata == 0) ? "TRUE(0)" : "FALSE(1)");
+                                 (d_mem_wdata == 1) ? "TRUE(1)" : "FALSE(-1)");
                     end
                 end
             end
@@ -151,34 +151,34 @@ module tb_branch_test;
             end
         end
 
-        // Check branch test results - 0 means PASS, 1 means FAIL (per ASM convention)
+        // Check branch test results: 1 means PASS, -1 means FAIL (per ASM convention)
         $display("\n============= Branch Instruction Test Results =============");
-        $display("Test Case 1.1 (BEQ Success Test): %s (Value=%0d, Expected=0)", 
-                 (data_mem[64] == 0) ? "PASS" : "FAIL", data_mem[64]);
-        $display("Test Case 1.2 (BEQ Fail Test): %s (Value=%0d, Expected=0)", 
-                 (data_mem[65] == 0) ? "PASS" : "FAIL", data_mem[65]);
-        $display("Test Case 2.1 (BNE Success Test): %s (Value=%0d, Expected=0)", 
-                 (data_mem[66] == 0) ? "PASS" : "FAIL", data_mem[66]);
-        $display("Test Case 2.2 (BNE Fail Test): %s (Value=%0d, Expected=0)", 
-                 (data_mem[67] == 0) ? "PASS" : "FAIL", data_mem[67]);
-        $display("Test Case 3.1 (BLT Success Test): %s (Value=%0d, Expected=0)", 
-                 (data_mem[68] == 0) ? "PASS" : "FAIL", data_mem[68]);
-        $display("Test Case 3.2 (BLT Fail Test): %s (Value=%0d, Expected=0)", 
-                 (data_mem[69] == 0) ? "PASS" : "FAIL", data_mem[69]);
-        $display("Test Case 4.1 (BGE Success Test): %s (Value=%0d, Expected=0)", 
-                 (data_mem[70] == 0) ? "PASS" : "FAIL", data_mem[70]);
-        $display("Test Case 4.2 (BGE Success Test - Equal): %s (Value=%0d, Expected=0)", 
-                 (data_mem[71] == 0) ? "PASS" : "FAIL", data_mem[71]);
-        $display("Test Case 5.1 (BLTU Success Test): %s (Value=%0d, Expected=0)", 
-                 (data_mem[72] == 0) ? "PASS" : "FAIL", data_mem[72]);
-        $display("Test Case 5.2 (BLTU Special Test - Negative): %s (Value=%0d, Expected=0)", 
-                 (data_mem[73] == 0) ? "PASS" : "FAIL", data_mem[73]);
-        $display("Test Case 6.1 (BGEU Success Test): %s (Value=%0d, Expected=0)", 
-                 (data_mem[74] == 0) ? "PASS" : "FAIL", data_mem[74]);
-        $display("Test Case 6.2 (BGEU Special Test - Negative): %s (Value=%0d, Expected=0)", 
-                 (data_mem[75] == 0) ? "PASS" : "FAIL", data_mem[75]);
-        $display("Test Case 7 (Backward Branch - Loop): %s (Value=%0d, Expected=0)", 
-                 (data_mem[76] == 0) ? "PASS" : "FAIL", data_mem[76]);
+        $display("Test Case 1.1 (BEQ Success Test): %s (Value=%0d, Expected=1)", 
+                 (data_mem[64] == 1) ? "PASS" : "FAIL", data_mem[64]);
+        $display("Test Case 1.2 (BEQ Fail Test): %s (Value=%0d, Expected=1)", 
+                 (data_mem[65] == 1) ? "PASS" : "FAIL", data_mem[65]);
+        $display("Test Case 2.1 (BNE Success Test): %s (Value=%0d, Expected=1)", 
+                 (data_mem[66] == 1) ? "PASS" : "FAIL", data_mem[66]);
+        $display("Test Case 2.2 (BNE Fail Test): %s (Value=%0d, Expected=1)", 
+                 (data_mem[67] == 1) ? "PASS" : "FAIL", data_mem[67]);
+        $display("Test Case 3.1 (BLT Success Test): %s (Value=%0d, Expected=1)", 
+                 (data_mem[68] == 1) ? "PASS" : "FAIL", data_mem[68]);
+        $display("Test Case 3.2 (BLT Fail Test): %s (Value=%0d, Expected=1)", 
+                 (data_mem[69] == 1) ? "PASS" : "FAIL", data_mem[69]);
+        $display("Test Case 4.1 (BGE Success Test): %s (Value=%0d, Expected=1)", 
+                 (data_mem[70] == 1) ? "PASS" : "FAIL", data_mem[70]);
+        $display("Test Case 4.2 (BGE Success Test - Equal): %s (Value=%0d, Expected=1)", 
+                 (data_mem[71] == 1) ? "PASS" : "FAIL", data_mem[71]);
+        $display("Test Case 5.1 (BLTU Success Test): %s (Value=%0d, Expected=1)", 
+                 (data_mem[72] == 1) ? "PASS" : "FAIL", data_mem[72]);
+        $display("Test Case 5.2 (BLTU Special Test - Negative): %s (Value=%0d, Expected=1)", 
+                 (data_mem[73] == 1) ? "PASS" : "FAIL", data_mem[73]);
+        $display("Test Case 6.1 (BGEU Success Test): %s (Value=%0d, Expected=1)", 
+                 (data_mem[74] == 1) ? "PASS" : "FAIL", data_mem[74]);
+        $display("Test Case 6.2 (BGEU Special Test - Negative): %s (Value=%0d, Expected=1)", 
+                 (data_mem[75] == 1) ? "PASS" : "FAIL", data_mem[75]);
+        $display("Test Case 7 (Backward Branch - Loop): %s (Value=%0d, Expected=1)", 
+                 (data_mem[76] == 1) ? "PASS" : "FAIL", data_mem[76]);
         $display("=============================================\n");
 
         $display("Dumping Memory Contents for Analysis:");
