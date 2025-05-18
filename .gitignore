@@ -2,5 +2,5 @@
 add_sim
 mul_sim
 branch_sim
-tests/hex_output/*
+hardware/sim/tests/hex_output/*
 output.txt
