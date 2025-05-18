@@ -6,3 +6,4 @@ alwaysApply: true
 - This is a RSIC-V 32I CPU project, use verilog and python.
 - All RTL code put in hardware folder.
 - Avoid using dummy event or behavior, just implement the features directly.
+- Update and sync README.md after change if need.
