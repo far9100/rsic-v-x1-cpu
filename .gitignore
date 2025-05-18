@@ -1,6 +1,10 @@
+# Simulation results
+
 *.vcd
+
+# Compile results
 add_sim
 mul_sim
-branch_sim
+branch_test
 hardware/sim/tests/hex_outputs/*
 output.txt
