@@ -45,7 +45,7 @@ module tb_branch_test;
     integer i;
     initial begin
         // Load instructions from test file - using relative path corrected
-        $readmemh("./tests/hex_outputs/branch_integrated_test.hex", instr_mem);
+        $readmemh("hardware/sim/tests/hex_outputs/branch_integrated_test.hex", instr_mem);
         
         // Display first 10 instructions for debugging
         $display("Instruction Memory Initialization:");
@@ -77,7 +77,6 @@ module tb_branch_test;
         if (rst_n) begin
             // Track PC changes to detect branches
             if (prev_pc != i_mem_addr) begin
-                $display("PC changed from 0x%h to 0x%h at cycle %0d", prev_pc, i_mem_addr, cycle_count_sim);
                 
                 // Specifically look for backward branch (around address 0x94-0x9C in the ASM)
                 if (i_mem_addr >= 32'h00000094 && i_mem_addr <= 32'h0000009C) begin
