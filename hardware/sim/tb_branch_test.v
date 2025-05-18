@@ -47,9 +47,9 @@ module tb_branch_test;
         // Load instructions from test file - using relative path corrected
         $readmemh("hardware/sim/tests/hex_outputs/branch_integrated_test.hex", instr_mem);
         
-        // Display first 10 instructions for debugging
+        // Display first 20 instructions for debugging
         $display("Instruction Memory Initialization:");
-        for (i = 0; i < 10; i = i + 1) begin
+        for (i = 0; i < 20; i = i + 1) begin
             $display("instr_mem[%0d] = %h", i, instr_mem[i]);
         end
 
