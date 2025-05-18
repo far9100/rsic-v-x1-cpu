@@ -112,7 +112,7 @@
 3. **編譯 Verilog 原始碼與測試平台:**
     ```powershell
     # 必須從專案根目錄執行此命令
-    iverilog -o branch_test hardware/sim/tb_branch_test_updated.v hardware/rtl/*.v
+    iverilog -o branch_test hardware/sim/tb_branch_test.v hardware/rtl/*.v
     ```
 
 4. **執行模擬:**
@@ -123,34 +123,30 @@
 5. **查看測試結果:**
     模擬完成後，測試結果會顯示在終端。
 
-    我們提供了兩個版本的分支測試平台：
-    - `tb_branch_test.v`: 原始版本（使用中文輸出）
-    - `tb_branch_test_updated.v`: 更新版本（使用英文輸出，避免終端編碼問題）
+    測試平台使用英文輸出，避免終端編碼問題。
 
     每個測試案例顯示格式為"PASS/FAIL (Value=X)"，其中：
     - 值為0表示測試通過
     - 值為1表示測試失敗
-    - 對於後向分支測試，值為0也表示通過，因為執行後結果等於0（最近的更新）
+    - 對於後向分支測試，值為0也表示通過，表示迴圈成功執行
 
     測試內容包括：
-    - BEQ指令成功/失敗案例測試
-    - BNE指令成功/失敗案例測試
-    - BLT指令成功/失敗案例測試
-    - BGE指令成功案例測試（包括相等情況）
-    - BLTU指令測試（包括無符號比較特殊案例）
-    - BGEU指令測試（包括無符號比較特殊案例）
-    - 後向分支（迴圈）測試
+    - BEQ（相等時分支）指令正確與錯誤條件下的行為
+    - BNE（不相等時分支）指令正確與錯誤條件下的行為
+    - BLT/BGE（有符號比較）指令正確與錯誤條件下的行為
+    - BLTU/BGEU（無符號比較）指令正確與錯誤條件下的行為
+    - 後向分支（向後跳躍，形成迴圈）功能測試
 
 6. **查看波形 (可選):**
     ```powershell
-    gtkwave tb_branch_test_updated.vcd
+    gtkwave tb_branch_test.vcd
     ```
 
 **注意:**
 - 在執行測試前，請確保已安裝 Python 3 和 iVerilog。
-- 若使用更新版本的測試平台，路徑問題已修正，需使用`./tests/hex_outputs/branch_integrated_test.hex`相對路徑。
+- 路徑使用`./tests/hex_outputs/branch_integrated_test.hex`相對路徑。
 - 每個步驟執行後，請確認是否有錯誤訊息。
-- 2024-06-19更新：修正了測試案例7（後向分支-迴圈）的預期結果，從3改為0，以匹配當前CPU實現的行為。
+- 2024-06-20更新：測試結果判斷標準已更新，現在使用1表示測試通過，0表示測試失敗。
 
 ## 偵錯與疑難排解
 
