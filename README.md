@@ -94,6 +94,28 @@
     gtkwave tb_mul_test.vcd
     ```
 
+### 分支指令測試
+
+1. **轉譯組合語言程式:**
+    ```powershell
+    python assembler/assembler.py ./tests/asm_sources/branch_integrated_test.asm -o ./tests/hex_outputs/branch_integrated_test.hex
+    ```
+
+2. **編譯 Verilog 原始碼與測試平台:**
+    ```powershell
+    iverilog -o branch_sim hardware/sim/tb_branch_test.v hardware/rtl/*.v
+    ```
+
+3. **執行模擬:**
+    ```powershell
+    vvp branch_sim
+    ```
+
+4. **查看波形 (可選):**
+    ```powershell
+    gtkwave tb_branch_test.vcd
+    ```
+
 **注意:**
 - 在執行測試前，請確保已安裝 Python 3 和 iVerilog。
 - 每個步驟執行後，請確認是否有錯誤訊息。

@@ -73,7 +73,7 @@ module tb_branch_test;
         rst_n = 0;
         
         // 載入測試程式（分支測試）
-        $readmemh("../../tests/hex_outputs/branch_test.hex", instruction_memory);
+        $readmemh("./tests/hex_outputs/branch_integrated_test.hex", instruction_memory);
         
         // 初始化資料記憶體
         for (integer i = 0; i < 1024; i = i + 1) begin
