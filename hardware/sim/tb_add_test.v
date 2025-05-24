@@ -46,7 +46,7 @@ module tb_add_test;
     initial begin
         // 從 .hex 檔案載入指令（例如，由組譯器產生）
         // 重要：確保此路徑相對於執行 vvp 的位置是正確的（通常是專案根目錄）
-        $readmemh("tests/hex_outputs/add_integrated_test.hex", instr_mem);
+        $readmemh("./tests/hex_outputs/add_integrated_test.hex", instr_mem);
         
         // 初始化資料記憶體（例如，設為零）
         for (i = 0; i < MEM_SIZE_WORDS; i = i + 1) begin

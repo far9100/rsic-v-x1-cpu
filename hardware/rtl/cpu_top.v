@@ -37,6 +37,18 @@ module cpu_top (
     wire [31:0] mem_wb_mem_rdata_from_mem;   // 從記憶體讀取的資料，從 MEM 到 MEM/WB
     wire [31:0] mem_wb_data;                 // 要寫回暫存器檔案的資料
 
+    // 分支控制信號
+    wire        id_branch;                   // 分支指令標識
+    wire        id_is_jal;                   // JAL 指令標識
+    wire        id_is_jalr;                  // JALR 指令標識  
+    wire [2:0]  id_funct3;                   // 分支指令的 funct3 欄位
+    wire        ex_branch;                   // EX 階段分支控制
+    wire        ex_is_jal;                   // EX 階段 JAL 控制
+    wire        ex_is_jalr;                  // EX 階段 JALR 控制
+    wire [2:0]  ex_funct3;                   // EX 階段 funct3
+    wire [31:0] branch_target_addr;          // 分支目標地址
+    wire        branch_taken;                // 分支是否被採用
+
     // 用於前遞/危險單元或複雜路徑的信號預留位置
     wire [31:0] ex_mem_pc_plus_4;
     wire [31:0] ex_mem_rs1_data;
@@ -60,6 +72,10 @@ module cpu_top (
     // IF/ID
     wire [31:0] if_id_pc_plus_4;
     wire [31:0] if_id_instr;
+    
+    // 添加从IF/ID寄存器到ID阶段的中间信号
+    wire [31:0] id_pc_plus_4;
+    wire [31:0] id_instr;
 
     // ID/EX
     wire [31:0] id_ex_pc_plus_4;
@@ -105,13 +121,14 @@ module cpu_top (
     if_stage u_if_stage (
         .clk            (clk),
         .rst_n          (rst_n),
-        // .pc_write_en   (pc_write_en), // 來自危險單元
-        // .branch_target_addr (ex_mem_branch_target_addr), // 來自 EX 或 MEM 的分支目標
-        // .branch_taken    (ex_mem_branch_taken),      // 來自 EX 或 MEM 的分支決策
+        .pc_write_en    (1'b1),              // 簡化：永遠啟用 PC 更新
+        .branch_taken   (branch_taken),      // 來自 EX 階段的分支決策
+        .branch_target_addr (branch_target_addr), // 來自 EX 階段的分支目標
         .i_mem_addr     (i_mem_addr),
         .i_mem_rdata    (i_mem_rdata),
         .if_id_pc_plus_4_o (if_id_pc_plus_4),
-        .if_id_instr_o     (if_id_instr)
+        .if_id_instr_o     (if_id_instr),
+        .if_pc_o           ()                // 未使用
     );
 
     //------------------------------------------------------------------------
@@ -120,11 +137,12 @@ module cpu_top (
     pipeline_reg_if_id u_pipeline_reg_if_id (
         .clk            (clk),
         .rst_n          (rst_n),
-        // .if_id_write_en (if_id_write_en), // 來自危險單元
+        .if_id_write_en (1'b1),         // 简化：永远启用写入
+        .if_id_flush_en (1'b0),         // 简化：永不清除（或根据分支单元的实际信号）
         .if_pc_plus_4_i (if_id_pc_plus_4),
         .if_instr_i     (if_id_instr),
-        .id_pc_plus_4_o (id_ex_pc_plus_4), // 這將傳遞到 ID/EX 暫存器
-        .id_instr_o     (id_ex_instr)      // 這是 ID 階段的指令
+        .id_pc_plus_4_o (id_pc_plus_4),   // 输出到ID阶段
+        .id_instr_o     (id_instr)        // 输出到ID阶段
     );
 
     //------------------------------------------------------------------------
@@ -133,8 +151,8 @@ module cpu_top (
     id_stage u_id_stage (
         .clk            (clk),
         .rst_n          (rst_n),
-        .instr_i        (id_ex_instr), // 來自 IF/ID 暫存器的指令
-        .pc_plus_4_i    (id_ex_pc_plus_4), // 來自 IF/ID 暫存器的 PC+4
+        .instr_i        (id_instr),       // 来自IF/ID寄存器的指令
+        .pc_plus_4_i    (id_pc_plus_4),   // 来自IF/ID寄存器的PC+4
         .wb_reg_write_i (mem_wb_reg_write), // 來自 WB 的寫入啟用
         .wb_rd_addr_i   (mem_wb_rd_addr),   // 來自 WB 的目標暫存器
         .wb_data_i      (mem_wb_data),      // 來自 WB 的寫入資料（ALU 結果或記憶體資料）
@@ -152,7 +170,11 @@ module cpu_top (
         .mem_read_o     (id_ex_mem_read),
         .mem_write_o    (id_ex_mem_write),
         .reg_write_o    (id_ex_reg_write),
-        .mem_to_reg_o   (id_ex_mem_to_reg)
+        .mem_to_reg_o   (id_ex_mem_to_reg),
+        .branch_o       (id_branch),
+        .is_jal_o       (id_is_jal),
+        .is_jalr_o      (id_is_jalr),
+        .funct3_o       (id_funct3)
         // .id_ex_bubble_o (id_ex_bubble) // 如果需要暫停則送到危險單元
     );
 
@@ -163,7 +185,7 @@ module cpu_top (
         .clk            (clk),
         .rst_n          (rst_n),
         // .id_ex_bubble_i  (id_ex_bubble), // 來自危險單元或 ID 階段
-        .id_pc_plus_4_i (id_ex_pc_plus_4), // 來自 ID 階段（從 IF/ID 傳遞）
+        .id_pc_plus_4_i (id_pc_plus_4),  // 来自ID阶段（从IF/ID传递）
         .id_rs1_data_i  (id_ex_rs1_data),
         .id_rs2_data_i  (id_ex_rs2_data),
         .id_imm_ext_i   (id_ex_imm_ext),
@@ -176,6 +198,10 @@ module cpu_top (
         .id_mem_write_i (id_ex_mem_write),
         .id_reg_write_i (id_ex_reg_write),
         .id_mem_to_reg_i(id_ex_mem_to_reg),
+        .id_branch_i    (id_branch),
+        .id_is_jal_i    (id_is_jal),
+        .id_is_jalr_i   (id_is_jalr),
+        .id_funct3_i    (id_funct3),
 
         .ex_pc_plus_4_o (ex_mem_pc_plus_4), // 傳遞到 EX/MEM 暫存器
         .ex_rs1_data_o  (ex_mem_rs1_data),
@@ -189,7 +215,11 @@ module cpu_top (
         .ex_mem_read_o  (ex_mem_mem_read_ctrl),
         .ex_mem_write_o (ex_mem_mem_write_ctrl),
         .ex_reg_write_o (ex_mem_reg_write_ctrl),
-        .ex_mem_to_reg_o(ex_mem_mem_to_reg_ctrl)
+        .ex_mem_to_reg_o(ex_mem_mem_to_reg_ctrl),
+        .ex_branch_o    (ex_branch),
+        .ex_is_jal_o    (ex_is_jal),
+        .ex_is_jalr_o   (ex_is_jalr),
+        .ex_funct3_o    (ex_funct3)
     );
 
     //------------------------------------------------------------------------
@@ -201,9 +231,14 @@ module cpu_top (
         .rs1_data_i     (ex_mem_rs1_data), // 可能經過前遞
         .rs2_data_i     (ex_mem_rs2_data_for_alu), // 可能經過前遞
         .imm_ext_i      (ex_mem_imm_ext),
+        .pc_plus_4_i    (ex_mem_pc_plus_4),
         .alu_src_i      (ex_mem_alu_src),
         .alu_op_i       (ex_mem_alu_op),
         .rd_addr_i      (ex_mem_rd_addr_for_ex), // 傳遞目標暫存器位址
+        .funct3_i       (ex_funct3),
+        .is_branch_i    (ex_branch),
+        .is_jal_i       (ex_is_jal),
+        .is_jalr_i      (ex_is_jalr),
 
         // 連接前遞輸入以解決資料危險
         .ex_mem_alu_result_i(mem_wb_alu_result_from_exmem), // 來自 EX/MEM 管線暫存器的結果
@@ -220,7 +255,9 @@ module cpu_top (
         .forward_b_sel_i  (forward_b_sel),
 
         .alu_result_o   (ex_mem_alu_result_pre_fwd),
-        .zero_flag_o    (ex_zero_flag) // 用於分支條件
+        .zero_flag_o    (ex_zero_flag), // 用於分支條件
+        .branch_target_addr_o(branch_target_addr),
+        .branch_taken_o (branch_taken)
     );
 
     //------------------------------------------------------------------------
@@ -291,7 +328,7 @@ module cpu_top (
     // 選擇要寫回暫存器檔案的資料來源
     assign mem_wb_data = (mem_wb_mem_to_reg == 2'b00) ? mem_wb_alu_result :  // ALU 結果
                         (mem_wb_mem_to_reg == 2'b01) ? mem_wb_mem_rdata :    // 記憶體資料
-                        (mem_wb_mem_to_reg == 2'b10) ? id_ex_pc_plus_4 :    // PC+4（用於 JAL/JALR）
+                        (mem_wb_mem_to_reg == 2'b10) ? ex_mem_pc_plus_4 :    // PC+4（用於 JAL/JALR，来自EX/MEM）
                         32'h0;                                                // 預設值
 
     //------------------------------------------------------------------------

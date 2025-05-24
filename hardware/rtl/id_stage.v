@@ -34,7 +34,14 @@ module id_stage (
     output wire        mem_write_o,    // 記憶體寫入啟用
     // WB 階段的控制信號（通過 EX、MEM 階段）
     output wire        reg_write_o,    // 暫存器寫入啟用
-    output wire [1:0]  mem_to_reg_o    // 寫回資料來源（00：ALU，01：記憶體，10：PC+4 用於 JAL/JALR）
+    output wire [1:0]  mem_to_reg_o,   // 寫回資料來源（00：ALU，01：記憶體，10：PC+4 用於 JAL/JALR）
+
+    // 分支和跳轉控制信號
+    output wire        branch_o,       // 是否為分支指令
+    output wire        jump_o,         // 是否為跳躍指令（JAL, JALR）
+    output wire        is_jal_o,       // 是否為 JAL 指令
+    output wire        is_jalr_o,      // 是否為 JALR 指令
+    output wire [2:0]  funct3_o        // 分支指令的 funct3 欄位
 
     // 輸出到危害單元（如果在這裡檢測到因載入指令的資料相依性而需要停滯）
     // output wire        id_stall_o
@@ -84,7 +91,11 @@ module id_stage (
         .mem_read_o  (mem_read_o),
         .mem_write_o (mem_write_o),
         .reg_write_o (reg_write_o),
-        .mem_to_reg_o(mem_to_reg_o)
+        .mem_to_reg_o(mem_to_reg_o),
+        .branch_o    (branch_o),
+        .jump_o      (jump_o),
+        .is_jal_o    (is_jal_o),
+        .is_jalr_o   (is_jalr_o)
     );
 
     // MUL 指令處理時的除錯輸出
@@ -102,6 +113,9 @@ module id_stage (
     assign rs1_addr_o = rs1;
     assign rs2_addr_o = rs2;
     assign rd_addr_o  = rd;
+
+    // 傳遞 funct3 欄位給 EX 階段
+    assign funct3_o = funct3;
 
     // 停滯檢測邏輯（簡化的佔位符）
     // assign id_stall_o = (mem_read_o && reg_write_o && ((rd == rs1) || (rd == rs2))); // 基本的載入-使用危害
