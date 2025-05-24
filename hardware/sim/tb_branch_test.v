@@ -91,7 +91,7 @@ module tb_branch_test;
         $display("=== 分支測試結果 ===");
         $display("x6 (結果暫存器) = %d", u_cpu.u_id_stage.u_reg_file.registers[6]);
         
-        // 預期結果：x6 應該等於 100 (簡化版測試)
+        // 預期結果：x6 應該等於 100 (包含簡化迴圈測試)
         if (u_cpu.u_id_stage.u_reg_file.registers[6] == 100) begin
             $display("✓ 分支測試通過！");
         end else begin
@@ -101,9 +101,16 @@ module tb_branch_test;
         
         // 顯示其他暫存器的值
         $display("=== 暫存器狀態 ===");
-        for (integer i = 1; i < 12; i = i + 1) begin
+        for (integer i = 1; i < 16; i = i + 1) begin
             $display("x%0d = %d", i, u_cpu.u_id_stage.u_reg_file.registers[i]);
         end
+        
+        // 專門顯示調試信息
+        $display("=== 調試信息 ===");
+        $display("x13 (迴圈前x6值) = %d", u_cpu.u_id_stage.u_reg_file.registers[13]);
+        $display("x14 (迴圈後add前x6值) = %d", u_cpu.u_id_stage.u_reg_file.registers[14]);
+        $display("x15 (add後x6值) = %d", u_cpu.u_id_stage.u_reg_file.registers[15]);
+        $display("x12 (迴圈累加器) = %d", u_cpu.u_id_stage.u_reg_file.registers[12]);
         
         $finish;
     end

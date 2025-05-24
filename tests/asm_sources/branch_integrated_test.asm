@@ -1,6 +1,6 @@
-# RISC-V 32I CPU - 分支指令測試 (逐步測試 - 添加負數比較)
+# RISC-V 32I CPU - 分支指令測試 (逐步測試 - 添加簡化迴圈)
 # 檔案：tests/asm_sources/branch_integrated_test.asm
-# 目前測試：BEQ, BNE, BLT, BGE, BLTU, BGEU, 負數比較, 分支不採用
+# 目前測試：BEQ, BNE, BLT, BGE, BLTU, BGEU, 負數比較, 分支不採用, 簡化迴圈(避免負數立即數)
 # 註解掉：JAL, JALR, 複雜測試
 
 .text
@@ -86,9 +86,35 @@ test_zero:
 zero_equal:
     addi x6, x6, 1           # x6 = 11
 
+# 測試簡化的向後跳轉迴圈 (避免負數立即數) - 增強調試版本
+test_simple_loop:
+    # 調試點1：記錄迴圈前的x6值到x13
+    add x13, x6, x0          # x13 = x6 (應該是11)
+    
+    addi x10, x0, 0          # x10 = 0 (迴圈計數器，從0開始)
+    addi x11, x0, 3          # x11 = 3 (目標值)
+    addi x12, x0, 0          # x12 = 0 (累加器)
+    
+simple_loop_start:
+    addi x12, x12, 1         # x12++ (累加器遞增)
+    addi x10, x10, 1         # x10++ (計數器遞增，避免使用負數)
+    bne x10, x11, simple_loop_start  # 如果 x10 != 3，繼續迴圈
+    
+    # 調試點2：記錄迴圈後但add前的狀態到x14
+    add x14, x6, x0          # x14 = x6 (應該還是11)
+    
+    # 迴圈結束，x12 應該 = 3
+    add x6, x6, x12          # x6 = 11 + 3 = 14，表示簡化迴圈正確執行
+    
+    # 調試點3：記錄add後的x6值到x15
+    add x15, x6, x0          # x15 = x6 (應該是14)
+    
+    # 添加調試標記
+    addi x6, x6, 10          # x6 = 14 + 10 = 24，表示迴圈測試完成
+
 # 程式結束
 end_program:
-    addi x6, x6, 89          # x6 = 100，最終預期結果
+    addi x6, x6, 76          # x6 = 24 + 76 = 100，最終預期結果
     
     # 停止程式（無限迴圈）
 infinite_loop:
