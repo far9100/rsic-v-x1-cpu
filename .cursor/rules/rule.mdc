@@ -1,0 +1,10 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+- This is a RSIC - 32I CPU using verilog.
+- Update README.md each time you update the program, if necessary.
+- All simulation steps must be executed in the project root directory.
+
+

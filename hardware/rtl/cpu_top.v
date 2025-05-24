@@ -48,6 +48,12 @@ module cpu_top (
     wire [2:0]  ex_funct3;                   // EX 階段 funct3
     wire [31:0] branch_target_addr;          // 分支目標地址
     wire        branch_taken;                // 分支是否被採用
+    
+    // 管線控制信號
+    wire        pc_write_en;                 // PC 寫入啟用
+    wire        if_id_write_en;              // IF/ID 寫入啟用
+    wire        if_id_flush_en;              // IF/ID 沖洗啟用
+    wire        id_ex_flush_en;              // ID/EX 沖洗啟用
 
     // 用於前遞/危險單元或複雜路徑的信號預留位置
     wire [31:0] ex_mem_pc_plus_4;
@@ -67,6 +73,9 @@ module cpu_top (
     // 前遞單元信號
     wire [1:0] forward_a_sel;
     wire [1:0] forward_b_sel;
+    
+    // 危險檢測信號
+    wire        load_use_hazard;
 
     // 連接管線階段的連線（原始宣告，部分可能已包含在上述）
     // IF/ID
@@ -118,10 +127,28 @@ module cpu_top (
     //------------------------------------------------------------------------
     // IF 階段
     //------------------------------------------------------------------------
+    // 危險檢測邏輯
+    //------------------------------------------------------------------------
+    // 簡化的載入-使用危險檢測
+    wire load_hazard_rs1 = (ex_mem_mem_read_ctrl && (ex_mem_rd_addr_for_ex != 5'b0) && (ex_mem_rd_addr_for_ex == id_ex_rs1_addr));
+    wire load_hazard_rs2 = (ex_mem_mem_read_ctrl && (ex_mem_rd_addr_for_ex != 5'b0) && (ex_mem_rd_addr_for_ex == id_ex_rs2_addr));
+    assign load_use_hazard = load_hazard_rs1 || load_hazard_rs2;
+    
+    //------------------------------------------------------------------------
+    // 分支控制邏輯
+    //------------------------------------------------------------------------
+    assign pc_write_en = ~load_use_hazard;  // 載入-使用危險時停滯 PC
+    assign if_id_write_en = ~load_use_hazard; // 載入-使用危險時停滯 IF/ID
+    assign if_id_flush_en = branch_taken | ex_is_jal | ex_is_jalr; // 分支/跳轉時沖洗 IF/ID
+    assign id_ex_flush_en = branch_taken | ex_is_jal | ex_is_jalr | load_use_hazard; // 沖洗 ID/EX
+
+    //------------------------------------------------------------------------
+    // IF 階段
+    //------------------------------------------------------------------------
     if_stage u_if_stage (
         .clk            (clk),
         .rst_n          (rst_n),
-        .pc_write_en    (1'b1),              // 簡化：永遠啟用 PC 更新
+        .pc_write_en    (pc_write_en),       // 使用計算的 PC 寫入啟用
         .branch_taken   (branch_taken),      // 來自 EX 階段的分支決策
         .branch_target_addr (branch_target_addr), // 來自 EX 階段的分支目標
         .i_mem_addr     (i_mem_addr),
@@ -137,8 +164,8 @@ module cpu_top (
     pipeline_reg_if_id u_pipeline_reg_if_id (
         .clk            (clk),
         .rst_n          (rst_n),
-        .if_id_write_en (1'b1),         // 简化：永远启用写入
-        .if_id_flush_en (1'b0),         // 简化：永不清除（或根据分支单元的实际信号）
+        .if_id_write_en (if_id_write_en), // 使用計算的寫入啟用
+        .if_id_flush_en (if_id_flush_en), // 使用計算的沖洗啟用
         .if_pc_plus_4_i (if_id_pc_plus_4),
         .if_instr_i     (if_id_instr),
         .id_pc_plus_4_o (id_pc_plus_4),   // 输出到ID阶段
@@ -184,7 +211,8 @@ module cpu_top (
     pipeline_reg_id_ex u_pipeline_reg_id_ex (
         .clk            (clk),
         .rst_n          (rst_n),
-        // .id_ex_bubble_i  (id_ex_bubble), // 來自危險單元或 ID 階段
+        .id_ex_bubble_i  (id_ex_flush_en), // 使用計算的沖洗啟用
+        .id_ex_flush_en (id_ex_flush_en), // 添加沖洗控制
         .id_pc_plus_4_i (id_pc_plus_4),  // 来自ID阶段（从IF/ID传递）
         .id_rs1_data_i  (id_ex_rs1_data),
         .id_rs2_data_i  (id_ex_rs2_data),
@@ -277,7 +305,7 @@ module cpu_top (
         // .ex_branch_target_addr_i (ex_branch_target_addr), // 如果在 EX 計算分支目標
 
         .mem_alu_result_o (mem_wb_alu_result_from_exmem),
-        .mem_rs2_data_o   (d_mem_wdata), // 連接到資料記憶體寫入資料
+        .mem_rs2_data_o   (ex_mem_rs2_data_for_store), // 修正：使用獨立的信號
         .mem_rd_addr_o    (mem_wb_rd_addr_from_exmem),
         .mem_zero_flag_o  (mem_zero_flag),
         .mem_mem_read_o   (d_mem_read_ctrl), // 到資料記憶體
@@ -293,7 +321,7 @@ module cpu_top (
         .clk            (clk),
         .rst_n          (rst_n),
         .alu_result_i   (mem_wb_alu_result_from_exmem),
-        .rs2_data_i     (d_mem_wdata),
+        .rs2_data_i     (ex_mem_rs2_data_for_store), // 修正：使用正確的信號
         .mem_read_i     (d_mem_read_ctrl),
         .mem_write_i    (d_mem_write_ctrl),
         .d_mem_addr_o   (d_mem_addr),

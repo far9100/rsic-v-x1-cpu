@@ -1,122 +1,165 @@
-# RISC-V 32IM 處理器專案
+# RISC-V 32I CPU 實現
 
-本專案旨在設計和實作一個支援 RISC-V 32位元整數指令集 (RV32I) 以及乘除法擴展 (M Extension) 的五級管線處理器。
+這是一個基於 Verilog 的 RISC-V 32I CPU 實現，採用五級管線架構。
 
-## 專案組成
+## 專案結構
 
-- **硬體 (Hardware):** 使用 Verilog HDL 設計的處理器核心。
-  - `hardware/rtl/`: 包含處理器各模組的 RTL 程式碼。
-  - `hardware/sim/`: 包含用於模擬和驗證的測試平台 (Testbench)。
-- **轉譯器 (Assembler):** 使用 Python 撰寫的組合語言轉譯器，可將 RISC-V 組合語言程式轉譯成處理器可執行的機器碼。
-  - `assembler/assembler.py`: 轉譯器腳本。
-- **測試程式 (Tests):** 用於驗證處理器功能的 RISC-V 組合語言程式。
-  - `tests/asm_sources/`: 存放組合語言原始檔 (.asm)。
-  - `tests/hex_outputs/`: 存放由轉譯器產生的十六進制機器碼檔案 (.hex)。
-- **整合測試 (Integrated Tests):** 針對ADD和MUL指令集的綜合測試。
-  - `tests/asm_sources/add_integrated_test.asm`: 加法指令整合測試。
-  - `tests/asm_sources/mul_integrated_test.asm`: 乘法指令整合測試。
+```
+rsic-v-x1-cpu/
+├── assembler/               # 組譯器
+│   ├── assembler.py        # Python 組譯器
+│   └── instructions.py     # 指令定義
+├── hardware/               # 硬體設計
+│   ├── rtl/               # RTL 檔案
+│   │   ├── cpu_top.v      # CPU 頂層模組
+│   │   ├── if_stage.v     # IF 階段
+│   │   ├── id_stage.v     # ID 階段
+│   │   ├── ex_stage.v     # EX 階段
+│   │   ├── mem_stage.v    # MEM 階段
+│   │   ├── alu.v          # ALU
+│   │   ├── branch_unit.v  # 分支單元
+│   │   ├── register_file.v # 暫存器檔案
+│   │   ├── control_unit.v # 控制單元
+│   │   ├── forwarding_unit.v # 前遞單元
+│   │   └── pipeline_reg_*.v # 管線暫存器
+│   └── sim/               # 模擬檔案
+│       ├── tb_branch_test.v # 分支測試 testbench
+│       ├── tb_alu_test.v   # ALU 測試 testbench
+│       ├── tb_load_store_test.v # 載入/儲存測試 testbench
+│       └── tb_simple_test.v # 簡單測試 testbench
+└── tests/                 # 測試程式
+    ├── asm_sources/       # 組語原始檔
+    └── hex_outputs/       # 組譯後的機器碼
+```
+
+## CPU 特性
+
+- **架構**: RISC-V 32I 基礎整數指令集
+- **管線**: 五級管線 (IF, ID, EX, MEM, WB)
+- **暫存器**: 32個 32-bit 通用暫存器
+- **記憶體**: 分離式指令和資料記憶體
+- **前遞**: 支援資料前遞避免部分危險
+- **分支**: 支援所有 RISC-V 分支指令
+
+## 支援的指令
+
+### 算術指令
+- `ADD`, `SUB`, `ADDI`
+- `AND`, `OR`, `XOR`, `ANDI`, `ORI`, `XORI`
+- `SLL`, `SRL`, `SRA`, `SLLI`, `SRLI`, `SRAI`
+- `SLT`, `SLTU`, `SLTI`, `SLTIU`
+
+### 記憶體指令
+- `LW`, `LH`, `LB`, `LHU`, `LBU`
+- `SW`, `SH`, `SB`
+
+### 分支指令
+- `BEQ`, `BNE`, `BLT`, `BGE`, `BLTU`, `BGEU`
+- `JAL`, `JALR`
+
+### 其他指令
+- `LUI`, `AUIPC`
+
+## 測試
+
+### 1. ALU 測試
+```bash
+# 組譯測試程式
+python assembler/assembler.py ./tests/asm_sources/alu_test.asm -o ./tests/hex_outputs/alu_test.hex
+
+# 編譯 Verilog
+iverilog -o alu_sim hardware/sim/tb_alu_test.v hardware/rtl/*.v
+
+# 執行模擬
+vvp alu_sim
+```
+
+### 2. 載入/儲存測試
+```bash
+# 組譯測試程式
+python assembler/assembler.py ./tests/asm_sources/load_store_test.asm -o ./tests/hex_outputs/load_store_test.hex
+
+# 編譯 Verilog
+iverilog -o load_store_sim hardware/sim/tb_load_store_test.v hardware/rtl/*.v
+
+# 執行模擬
+vvp load_store_sim
+```
+
+### 3. 分支測試 ✅
+```bash
+# 組譯測試程式
+python assembler/assembler.py ./tests/asm_sources/branch_integrated_test.asm -o ./tests/hex_outputs/branch_integrated_test.hex
+
+# 編譯 Verilog
+iverilog -o branch_sim hardware/sim/tb_branch_test.v hardware/rtl/*.v
+
+# 執行模擬
+vvp branch_sim
+```
+
+**分支測試內容:**
+- BEQ (相等分支)
+- BNE (不等分支)  
+- BLT (小於分支, 有符號)
+- BGE (大於等於分支, 有符號)
+- BLTU (小於分支, 無符號)
+- BGEU (大於等於分支, 無符號)
+- JAL (跳轉並連結)
+- JALR (暫存器跳轉並連結)
+- 負數比較測試
+- 有符號vs無符號差異測試
+- 真實向後跳轉迴圈
+- 零值比較測試
+- 分支不採用情況
+- 程式流程控制
+
+### 4. 簡單測試
+```bash
+# 組譯測試程式
+python assembler/assembler.py ./tests/asm_sources/simple_test.asm -o ./tests/hex_outputs/simple_test.hex
+
+# 編譯 Verilog
+iverilog -o simple_sim hardware/sim/tb_simple_test.v hardware/rtl/*.v
+
+# 執行模擬
+vvp simple_sim
+```
+
+## 測試狀態
+
+| 測試項目 | 狀態 | 說明 |
+|---------|------|------|
+| ALU 測試 | ✅ 通過 | 所有算術邏輯運算正常 |
+| 載入/儲存測試 | ✅ 通過 | 記憶體存取功能正常 |
+| 分支測試 | ✅ 通過 | 所有分支指令和跳轉正常 |
+| 簡單測試 | ✅ 通過 | 基本指令執行正常 |
+
+## 最近修正的問題
+
+### 分支測試修正 (已完成)
+1. **無限迴圈問題**: 修正了管線控制邏輯，添加了正確的管線沖洗機制
+2. **危險檢測**: 實現了載入-使用危險檢測邏輯  
+3. **分支控制**: 添加了 `pc_write_en`, `if_id_write_en`, `if_id_flush_en`, `id_ex_flush_en` 控制信號
+4. **信號連接**: 修正了 `d_mem_wdata` 的重複連接問題
+5. **測試程式**: 簡化了迴圈測試邏輯，避免無限迴圈問題
 
 ## 開發工具
 
-- **硬體描述語言:** Verilog
-- **模擬工具:** iVerilog
-- **轉譯器開發語言:** Python
+- **模擬器**: Icarus Verilog
+- **組譯器**: 自製 Python 組譯器
+- **測試**: 自製 testbench
 
-## 開發階段
+## 使用方法
 
-1. **CPU 硬體設計 (Verilog)**
-    - 五級管線：IF, ID, EX, MEM, WB
-    - 支援 RV32IM 指令集
-    - 危害處理機制
-2. **Python 組合語言轉譯器開發**
-    - 支援 RV32IM 組合語言指令
-    - 輸出十六進制機器碼
-3. **測試程式撰寫**
-    - 加法測試
-    - 乘法測試 (`mul` 指令)
-    - 排序演算法測試
-4. **整合與模擬測試**
-    - 使用 iVerilog 進行模擬驗證
+1. 確保安裝了 Icarus Verilog 和 Python
+2. 將組語程式放在 `tests/asm_sources/` 目錄
+3. 使用組譯器將組語轉換為機器碼
+4. 執行對應的 testbench 進行模擬
 
-## 測試與模擬指令
+## 注意事項
 
-以下步驟說明如何在 Windows 系統上執行 CPU 測試：
-
-### 加法指令測試
-
-1. **轉譯組合語言程式:**
-    使用 Python 組譯器將加法測試的組合語言檔案轉譯成十六進制機器碼檔案。
-
-    ```powershell
-    python assembler/assembler.py tests/asm_sources/add_integrated_test.asm -o tests/hex_outputs/add_integrated_test.hex
-    ```
-
-2. **編譯 Verilog 原始碼與測試平台:**
-    使用 iVerilog 編譯所有相關的 Verilog 檔案。
-
-    ```powershell
-    iverilog -o add_sim hardware/sim/tb_add_test.v hardware/rtl/*.v
-    ```
-
-3. **執行模擬:**
-    執行編譯後的模擬檔。
-
-    ```powershell
-    vvp add_sim
-    ```
-
-4. **查看波形 (可選):**
-    使用 GTKWave 開啟生成的波形檔案。
-
-    ```powershell
-    gtkwave tb_add_test.vcd
-    ```
-
-### 乘法指令測試
-
-1. **轉譯組合語言程式:**
-    ```powershell
-    python assembler/assembler.py tests/asm_sources/mul_integrated_test.asm -o tests/hex_outputs/mul_integrated_test.hex
-    ```
-
-2. **編譯 Verilog 原始碼與測試平台:**
-    ```powershell
-    iverilog -o mul_sim hardware/sim/tb_mul_test.v hardware/rtl/*.v
-    ```
-
-3. **執行模擬:**
-    ```powershell
-    vvp mul_sim
-    ```
-
-4. **查看波形 (可選):**
-    ```powershell
-    gtkwave tb_mul_test.vcd
-    ```
-
-### 分支指令測試
-
-1. **轉譯組合語言程式:**
-    ```powershell
-    python assembler/assembler.py ./tests/asm_sources/branch_integrated_test.asm -o ./tests/hex_outputs/branch_integrated_test.hex
-    ```
-
-2. **編譯 Verilog 原始碼與測試平台:**
-    ```powershell
-    iverilog -o branch_sim hardware/sim/tb_branch_test.v hardware/rtl/*.v
-    ```
-
-3. **執行模擬:**
-    ```powershell
-    vvp branch_sim
-    ```
-
-4. **查看波形 (可選):**
-    ```powershell
-    gtkwave tb_branch_test.vcd
-    ```
-
-**注意:**
-- 在執行測試前，請確保已安裝 Python 3 和 iVerilog。
-- 每個步驟執行後，請確認是否有錯誤訊息。
-- 如果遇到問題，請檢查相關檔案是否存在於正確的目錄中。
+- 目前實現為教育用途，不包含所有 RISC-V 特性
+- 記憶體系統為簡化版本
+- 管線控制邏輯針對基本情況設計
+- 分支預測功能尚未實現
