@@ -1,7 +1,7 @@
-# RISC-V 32I CPU - 分支指令測試 (逐步測試 - 添加簡化迴圈)
+# RISC-V 32I CPU - 分支指令測試 (逐步測試 - 添加真實迴圈)
 # 檔案：tests/asm_sources/branch_integrated_test.asm
-# 目前測試：BEQ, BNE, BLT, BGE, BLTU, BGEU, 負數比較, 分支不採用, 簡化迴圈(避免負數立即數)
-# 註解掉：JAL, JALR, 複雜測試
+# 目前測試：BEQ, BNE, BLT, BGE, BLTU, BGEU, 負數比較, 分支不採用, 簡化迴圈, 真實向後跳轉迴圈(使用負數立即數)
+# 註解掉：JAL, JALR, 有符號vs無符號差異測試
 
 .text
 .globl _start
@@ -112,9 +112,35 @@ simple_loop_start:
     # 添加調試標記
     addi x6, x6, 10          # x6 = 14 + 10 = 24，表示迴圈測試完成
 
+# 測試真正的向後跳轉（迴圈）- 使用負數立即數
+test_real_loop:
+    # 調試點4：記錄真實迴圈前的x6值到x16
+    add x16, x6, x0          # x16 = x6 (應該是24)
+    
+    addi x10, x0, 3          # x10 = 3 (迴圈計數器)
+    addi x11, x0, 0          # x11 = 0 (累加器)
+    
+    # 調試點5：記錄迴圈初始化後的狀態到x17
+    add x17, x10, x0         # x17 = x10 (應該是3)
+    
+loop_start:
+    addi x11, x11, 1         # x11++ (累加器遞增)
+    addi x10, x10, -1        # x10-- (計數器遞減，使用負數立即數)
+    bne x10, x0, loop_start  # 如果 x10 != 0，向後跳轉繼續迴圈
+    
+    # 調試點6：記錄迴圈結束後的狀態到x18和x19
+    add x18, x10, x0         # x18 = x10 (應該是0)
+    add x19, x11, x0         # x19 = x11 (應該是3)
+    
+    # 迴圈結束，x11 應該 = 3
+    add x6, x6, x11          # x6 = 24 + 3 = 27，表示真實迴圈正確執行
+    
+    # 添加調試標記
+    addi x6, x6, 3           # x6 = 27 + 3 = 30，表示真實迴圈測試完成
+
 # 程式結束
 end_program:
-    addi x6, x6, 76          # x6 = 24 + 76 = 100，最終預期結果
+    addi x6, x6, 70          # x6 = 30 + 70 = 100，最終預期結果
     
     # 停止程式（無限迴圈）
 infinite_loop:
@@ -166,18 +192,10 @@ should_not_jump:
 # jalr_return:
 #     addi x6, x6, 5           # x6 = 95，表示 JALR 正確返回
 
-# # 測試真正的向後跳轉（迴圈）
-# test_real_loop:
-#     addi x10, x0, 3          # x10 = 3 (迴圈計數器)
-#     addi x11, x0, 0          # x11 = 0 (累加器)
-#     
-# loop_start:
-#     addi x11, x11, 1         # x11++
-#     addi x10, x10, -1        # x10--
-#     bne x10, x0, loop_start  # 如果 x10 != 0，向後跳轉繼續迴圈
-#     
-#     # 迴圈結束，x11 應該 = 3
-#     add x6, x6, x11          # x6 = 105 + 3 = 108
+# # JAL 目標
+# jal_target:
+#     addi x6, x6, 5           # x6 = 80，表示 JAL 正確跳轉
+#     jalr x0, x7, 0           # 使用 x7 返回（JAL 保存的地址）
 
 # # JAL 目標
 # jal_target:
