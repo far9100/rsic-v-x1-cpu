@@ -183,22 +183,48 @@ def assemble_b_type(rs1, rs2, label_str, funct3, opcode, labels, current_address
 
 
 def assemble_j_type(rd, label_str, labels, current_address):
+    """Assembles a J-type instruction (JAL)."""
     rd_int = register_to_int(rd)
-    offset = parse_immediate(
-        label_str, labels, current_address, is_branch_or_jal=True)
+    
+    # Calculate the offset to the label
+    if label_str not in labels:
+        raise ValueError(f"Undefined label: {label_str}")
+    
+    target_address = labels[label_str]
+    offset = target_address - current_address
+    
+    # J-type immediate encoding: imm[20|10:1|11|19:12]
+    # The immediate is 21 bits, but bit 0 is always 0 (instructions are 4-byte aligned)
+    if offset < -1048576 or offset > 1048574:  # 2^20 range, even numbers only
+        raise ValueError(f"J-type offset out of range: {offset}")
+    
+    # Extract bits for J-type immediate encoding
+    imm_20 = (offset >> 20) & 0x1
+    imm_10_1 = (offset >> 1) & 0x3FF
+    imm_11 = (offset >> 11) & 0x1
+    imm_19_12 = (offset >> 12) & 0xFF
+    
+    # Pack the immediate: [31:12] = {imm[20], imm[10:1], imm[11], imm[19:12]}
+    imm_packed = (imm_20 << 19) | (imm_10_1 << 9) | (imm_11 << 8) | imm_19_12
+    
+    # Assemble: imm[31:12] | rd[11:7] | opcode[6:0]
+    machine_code = (imm_packed << 12) | (rd_int << 7) | OPCODE_JAL
+    return machine_code
 
-    if not (-1048576 <= offset <= 1048574) or (offset % 2 != 0):
-        # J-type immediate is 21-bit signed, scaled by 2 (effectively 20-bit word offset)
-        # Range is -1048576 to +1048574, must be even
-        raise ValueError(
-            f"J-type offset {offset} for label '{label_str}' out of range or not even.")
 
-    imm20 = (offset >> 20) & 0x1   # imm[20]
-    imm10_1 = (offset >> 1) & 0x3FF  # imm[10:1]
-    imm11 = (offset >> 11) & 0x1   # imm[11]
-    imm19_12 = (offset >> 12) & 0xFF  # imm[19:12]
-
-    return (imm20 << 31) | (imm19_12 << 12) | (imm11 << 20) | (imm10_1 << 21) | (rd_int << 7) | OPCODE_JAL
+def assemble_u_type(rd, imm_str, opcode, labels=None, current_address=0):
+    """Assembles a U-type instruction (LUI, AUIPC)."""
+    rd_int = register_to_int(rd)
+    imm_val = parse_immediate(imm_str, labels, current_address)
+    
+    # U-type immediate is 20 bits, placed in bits [31:12]
+    # The lower 12 bits are automatically zero
+    if imm_val < 0 or imm_val > 0xFFFFF:  # 20-bit unsigned range
+        raise ValueError(f"U-type immediate out of range: {imm_val}")
+    
+    # Assemble: imm[31:12] | rd[11:7] | opcode[6:0]
+    machine_code = (imm_val << 12) | (rd_int << 7) | opcode
+    return machine_code
 
 
 def assemble_line(line_content, labels, current_address):
@@ -299,6 +325,11 @@ def assemble_line(line_content, labels, current_address):
         imm_val_for_srai = (FUNCT7_SRAI << 5) | shamt
         machine_code = assemble_i_type(args[0], args[1], str(
             imm_val_for_srai), FUNCT3_SRAI, OPCODE_IMM, labels, current_address)
+    # U-type instructions
+    elif instr == 'lui':  # lui rd, imm -> args: rd, imm
+        machine_code = assemble_u_type(args[0], args[1], OPCODE_LUI, labels, current_address)
+    elif instr == 'auipc':  # auipc rd, imm -> args: rd, imm
+        machine_code = assemble_u_type(args[0], args[1], OPCODE_AUIPC, labels, current_address)
 
     if machine_code is not None:
         return f"{machine_code:08x}"

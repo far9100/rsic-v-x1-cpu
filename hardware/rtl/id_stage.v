@@ -55,11 +55,14 @@ module id_stage (
     wire [4:0]  rs2     = instr_i[24:20];
     wire [6:0]  funct7  = instr_i[31:25];
 
+    // LUI指令特殊處理：強制rs1為x0
+    wire [4:0] effective_rs1_addr = (opcode == 7'b0110111) ? 5'b00000 : instr_i[19:15];
+
     // 暫存器檔案
     reg_file u_reg_file (
         .clk         (clk),
         .rst_n       (rst_n),
-        .rs1_addr    (instr_i[19:15]),
+        .rs1_addr    (effective_rs1_addr),
         .rs2_addr    (instr_i[24:20]),
         .rd_addr     (wb_rd_addr_i),
         .rd_data     (wb_data_i),

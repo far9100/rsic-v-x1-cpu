@@ -138,10 +138,57 @@ loop_start:
     # 添加調試標記
     addi x6, x6, 3           # x6 = 27 + 3 = 30，表示真實迴圈測試完成
 
+# 測試有符號vs無符號差異 (需要 LUI 指令)
+test_signed_unsigned_diff:
+    # 使用 0x80000000 來測試有符號/無符號差異
+    # 0x80000000 在有符號中是 -2147483648 (最小負數)
+    # 0x80000000 在無符號中是 2147483648 (大正數)
+    lui x20, 0x80000         # x20 = 0x80000000
+    
+    # 調試：保存x20的值
+    add x21, x20, x0         # x21 = x20，用於調試
+    
+    # 測試1：有符號比較 BLT - 0x80000000 < 0 (true，因為是負數)
+    blt x20, x0, signed_correct
+    addi x6, x6, 1000        # 錯誤：BLT沒有正確識別負數
+    beq x0, x0, test_unsigned # 跳過正確路徑
+    
+signed_correct:
+    addi x6, x6, 5           # x6 = 35，表示有符號比較正確
+    
+test_unsigned:
+    # 測試2：無符號比較 BLTU - 0x80000000 < 0 (false，因為是大正數)
+    bltu x20, x0, unsigned_error
+    addi x6, x6, 5           # x6 = 40，表示無符號比較正確
+    beq x0, x0, test_bge_signed # 跳過錯誤路徑
+    
+unsigned_error:
+    addi x6, x6, 2000        # 錯誤：BLTU錯誤地認為大正數小於0
+    
+test_bge_signed:
+    # 測試3：有符號 BGE - 0 >= 0x80000000 (true，因為0 > -2147483648)
+    bge x0, x20, bge_signed_correct
+    addi x6, x6, 300         # 錯誤：BGE沒有正確比較
+    beq x0, x0, test_bgeu_unsigned
+    
+bge_signed_correct:
+    addi x6, x6, 5           # x6 = 45，表示有符號BGE正確
+    
+test_bgeu_unsigned:
+    # 測試4：無符號 BGEU - 0 >= 0x80000000 (false，因為0 < 2147483648)
+    bgeu x0, x20, bgeu_unsigned_error
+    addi x6, x6, 5           # x6 = 50，表示無符號BGEU正確
+    beq x0, x0, signed_unsigned_complete
+    
+bgeu_unsigned_error:
+    addi x6, x6, 400         # 錯誤：BGEU錯誤地認為0大於等於大正數
+    
+signed_unsigned_complete:
+    # 調整最終結果，使最終結果為100
+    addi x6, x6, 50          # x6 = 50 + 50 = 100，最終預期結果
+
 # 程式結束
 end_program:
-    addi x6, x6, 70          # x6 = 30 + 70 = 100，最終預期結果
-    
     # 停止程式（無限迴圈）
 infinite_loop:
     beq x0, x0, infinite_loop
@@ -150,24 +197,6 @@ infinite_loop:
 should_not_jump:
     addi x6, x6, 1000        # 如果執行到這裡，表示分支錯誤
     beq x0, x0, infinite_loop
-
-# === 以下為註解掉的測試，待逐步添加 ===
-
-# # 測試有符號vs無符號差異 (需要 LUI 指令)
-# test_signed_unsigned_diff:
-#     # 使用大的正數來測試有符號/無符號差異
-#     lui x20, 0x80000         # x20 = 0x80000000 (最大負數 in signed, 大正數 in unsigned)
-#     blt x20, x0, signed_neg  # 有符號：0x80000000 < 0 (true)
-#     addi x6, x6, 1           # 不應該執行
-#     
-# signed_neg:
-#     addi x6, x6, 5           # x6 = 70
-#     
-#     bltu x20, x0, unsigned_check # 無符號：0x80000000 < 0 (false)
-#     addi x6, x6, 5               # 應該執行，x6 = 75
-
-# unsigned_check:
-#     addi x6, x6, 1000            # 如果執行，表示 BLTU 錯誤
 
 # # 測試 JAL (Jump and Link)
 # test_jal:
