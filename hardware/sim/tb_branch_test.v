@@ -85,7 +85,7 @@ module tb_branch_test;
         rst_n = 1;
         
         // 運行測試
-        #10000; // 運行足夠長的時間
+        #50000; // 運行足夠長的時間（增加運行時間）
         
         // 檢查結果
         $display("=== 分支測試結果 ===");
@@ -123,11 +123,46 @@ module tb_branch_test;
         end
     end
     
-    // 監控指令執行
+    // 監控指令執行和無限迴圈檢測
+    reg [31:0] instruction_count;
+    reg [31:0] last_pc;
+    reg [31:0] same_pc_count;
+    
     always @(posedge clk) begin
-        if (rst_n) begin
-            $display("時間 %0t: PC = 0x%08x, 指令 = 0x%08x", 
-                    $time, i_mem_addr, i_mem_rdata);
+        if (!rst_n) begin
+            instruction_count <= 0;
+            last_pc <= 0;
+            same_pc_count <= 0;
+        end else begin
+            instruction_count <= instruction_count + 1;
+            
+            // 檢測程式結束（infinite_loop）
+            if (i_mem_addr == last_pc) begin
+                same_pc_count <= same_pc_count + 1;
+                // 如果在 infinite_loop 地址（0x00000134），這是正常的程式結束
+                if (i_mem_addr == 32'h00000134 && same_pc_count > 10) begin
+                    $display("程式正常結束於 infinite_loop (PC = 0x%08x)", i_mem_addr);
+                    $display("最終結果檢查...");
+                    #100; // 等待一點時間讓暫存器穩定
+                    $finish;
+                end
+                // 其他地址的無限迴圈是錯誤
+                else if (same_pc_count > 1000) begin
+                    $display("錯誤：檢測到無限迴圈在 PC = 0x%08x", i_mem_addr);
+                    $display("指令 = 0x%08x", i_mem_rdata);
+                    $display("x10 = %d", u_cpu.u_id_stage.u_reg_file.registers[10]);
+                    $finish;
+                end
+            end else begin
+                same_pc_count <= 0;
+            end
+            last_pc <= i_mem_addr;
+            
+            // 只顯示前100條指令的執行
+            if (instruction_count < 100) begin
+                $display("時間 %0t: PC = 0x%08x, 指令 = 0x%08x", 
+                        $time, i_mem_addr, i_mem_rdata);
+            end
         end
     end
     

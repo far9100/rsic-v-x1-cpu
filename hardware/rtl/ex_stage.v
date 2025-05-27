@@ -94,7 +94,7 @@ module ex_stage (
         .rst_n           (rst_n),
         .rs1_data_i      (forwarded_rs1_data),
         .rs2_data_i      (forwarded_rs2_data),
-        .pc_i            (pc_plus_4_i - 4), // 當前 PC
+        .pc_i            (pc_plus_4_i - 32'd4), // 當前 PC (修正：確保是32位減法)
         .imm_i           (imm_ext_i),
         .funct3_i        (funct3_i),
         .is_branch_i     (is_branch_i),
