@@ -173,6 +173,7 @@ test_bge_signed:
     
 bge_signed_correct:
     addi x6, x6, 5           # x6 = 45，表示有符號BGE正確
+    beq x0, x0, test_bgeu_unsigned  # 跳轉到下一個測試
     
 test_bgeu_unsigned:
     # 測試4：無符號 BGEU - 0 >= 0x80000000 (false，因為0 < 2147483648)
@@ -186,6 +187,9 @@ bgeu_unsigned_error:
 signed_unsigned_complete:
     # 調整最終結果，使最終結果為100
     addi x6, x6, 50          # x6 = 50 + 50 = 100，最終預期結果
+    
+    # 跳轉到程式結束
+    beq x0, x0, end_program
 
 # 程式結束
 end_program:
@@ -197,36 +201,3 @@ infinite_loop:
 should_not_jump:
     addi x6, x6, 1000        # 如果執行到這裡，表示分支錯誤
     beq x0, x0, infinite_loop
-
-# # 測試 JAL (Jump and Link)
-# test_jal:
-#     jal x7, jal_target       # 跳轉到 jal_target，x7 = return address
-#     addi x6, x6, 1           # 不應該執行
-#     
-# jal_return:
-#     addi x6, x6, 5           # x6 = 85，表示從 JAL 正確返回
-
-# # 測試 JALR (Jump and Link Register) - 需要 AUIPC 指令
-# test_jalr:
-#     # 計算 jalr_target 的地址
-#     auipc x8, 0              # x8 = 當前 PC
-#     addi x8, x8, 12          # x8 = PC + 12 (指向 jalr_target)
-#     jalr x9, x8, 0           # 跳轉到 x8 地址，x9 = return address
-#     addi x6, x6, 1           # 不應該執行
-
-# jalr_target:
-#     addi x6, x6, 5           # x6 = 90，表示 JALR 正確跳轉
-#     jalr x0, x9, 0           # 返回到 x9 地址
-
-# jalr_return:
-#     addi x6, x6, 5           # x6 = 95，表示 JALR 正確返回
-
-# # JAL 目標
-# jal_target:
-#     addi x6, x6, 5           # x6 = 80，表示 JAL 正確跳轉
-#     jalr x0, x7, 0           # 使用 x7 返回（JAL 保存的地址）
-
-# # JAL 目標
-# jal_target:
-#     addi x6, x6, 5           # x6 = 80，表示 JAL 正確跳轉
-#     jalr x0, x7, 0           # 使用 x7 返回（JAL 保存的地址） 

@@ -13,6 +13,7 @@ module pipeline_reg_ex_mem (
     input  wire [31:0] ex_rs2_data_i,      // rs2 資料（用於儲存指令）
     input  wire [4:0]  ex_rd_addr_i,       // 目標暫存器位址
     input  wire        ex_zero_flag_i,     // 來自 ALU 的零旗標
+    input  wire [31:0] ex_pc_plus_4_i,     // PC+4（用於 JAL/JALR）
 
     // 來自 ID/EX 暫存器的輸入（通過 EX 階段的控制信號）
     // MEM 控制
@@ -27,6 +28,7 @@ module pipeline_reg_ex_mem (
     output reg [31:0] mem_rs2_data_o,    // 要寫入記憶體的資料
     output reg [4:0]  mem_rd_addr_o,
     output reg        mem_zero_flag_o,
+    output reg [31:0] mem_pc_plus_4_o,   // PC+4（傳遞到 WB 階段）
 
     // 輸出到 MEM 階段（控制信號）
     // MEM 控制
@@ -50,6 +52,7 @@ module pipeline_reg_ex_mem (
             mem_rs2_data_o   <= 32'b0;
             mem_rd_addr_o    <= 5'b0;
             mem_zero_flag_o  <= 1'b0;
+            mem_pc_plus_4_o  <= 32'b0;
 
             mem_mem_read_o   <= NOP_MEM_READ;
             mem_mem_write_o  <= NOP_MEM_WRITE;
@@ -62,6 +65,7 @@ module pipeline_reg_ex_mem (
         //     mem_rs2_data_o   <= 32'b0;
         //     mem_rd_addr_o    <= 5'b0; // NOP 的 rd = x0
         //     mem_zero_flag_o  <= 1'b0;
+        //     mem_pc_plus_4_o  <= 32'b0;
 
         //     mem_mem_read_o   <= NOP_MEM_READ;
         //     mem_mem_write_o  <= NOP_MEM_WRITE;
@@ -73,6 +77,7 @@ module pipeline_reg_ex_mem (
             mem_rs2_data_o   <= ex_rs2_data_i;
             mem_rd_addr_o    <= ex_rd_addr_i;
             mem_zero_flag_o  <= ex_zero_flag_i;
+            mem_pc_plus_4_o  <= ex_pc_plus_4_i;
 
             mem_mem_read_o   <= ex_mem_read_i;
             mem_mem_write_o  <= ex_mem_write_i;

@@ -30,6 +30,7 @@ module cpu_top (
     wire [31:0] mem_wb_alu_result_from_exmem; // 從 EX/MEM 到 MEM/WB 的 ALU 結果
     wire [4:0]  mem_wb_rd_addr_from_exmem;   // 從 EX/MEM 到 MEM/WB 的 rd 位址
     wire        mem_zero_flag;               // 從 EX/MEM 到 MEM 階段的零值旗標（用於分支）
+    wire [31:0] mem_wb_pc_plus_4_from_exmem; // 從 EX/MEM 到 MEM/WB 的 PC+4
     wire        d_mem_read_ctrl;             // 資料記憶體讀取控制
     wire        d_mem_write_ctrl;            // 資料記憶體寫入控制
     wire        mem_wb_reg_write_ctrl_from_exmem; // 從 EX/MEM 到 MEM/WB 的暫存器寫入控制
@@ -116,6 +117,7 @@ module cpu_top (
     wire [31:0] mem_wb_mem_rdata;
     wire [31:0] mem_wb_alu_result;
     wire [4:0]  mem_wb_rd_addr;
+    wire [31:0] mem_wb_pc_plus_4;
     // WB 階段的控制信號
     wire        mem_wb_reg_write;
     wire [1:0]  mem_wb_mem_to_reg;
@@ -298,6 +300,7 @@ module cpu_top (
         .ex_rs2_data_i  (ex_mem_rs2_data_for_alu), // 來自 ID/EX 的 sw 用 rs2_data
         .ex_rd_addr_i   (ex_mem_rd_addr_for_ex),    // 修正：來自 ID/EX 輸出 ex_mem_rd_addr_for_ex 的 rd_addr
         .ex_zero_flag_i (ex_zero_flag),              // 用於 MEM 或之後的分支決策
+        .ex_pc_plus_4_i (ex_mem_pc_plus_4),         // PC+4（用於 JAL/JALR）
         .ex_mem_read_i  (ex_mem_mem_read_ctrl),
         .ex_mem_write_i (ex_mem_mem_write_ctrl),
         .ex_reg_write_i (ex_mem_reg_write_ctrl),
@@ -308,6 +311,7 @@ module cpu_top (
         .mem_rs2_data_o   (ex_mem_rs2_data_for_store), // 修正：使用獨立的信號
         .mem_rd_addr_o    (mem_wb_rd_addr_from_exmem),
         .mem_zero_flag_o  (mem_zero_flag),
+        .mem_pc_plus_4_o  (mem_wb_pc_plus_4_from_exmem), // PC+4 輸出
         .mem_mem_read_o   (d_mem_read_ctrl), // 到資料記憶體
         .mem_mem_write_o  (d_mem_write_ctrl),// 到資料記憶體
         .mem_reg_write_o  (mem_wb_reg_write_ctrl_from_exmem),
@@ -340,12 +344,14 @@ module cpu_top (
         .mem_rdata_i    (mem_wb_mem_rdata_from_mem),
         .mem_alu_result_i(mem_wb_alu_result_from_exmem),
         .mem_rd_addr_i  (mem_wb_rd_addr_from_exmem),
+        .mem_pc_plus_4_i(mem_wb_pc_plus_4_from_exmem),
         .mem_reg_write_i(mem_wb_reg_write_ctrl_from_exmem),
         .mem_mem_to_reg_i(mem_wb_mem_to_reg_ctrl_from_exmem),
 
         .wb_mem_rdata_o (mem_wb_mem_rdata),
         .wb_alu_result_o(mem_wb_alu_result),
         .wb_rd_addr_o   (mem_wb_rd_addr),
+        .wb_pc_plus_4_o (mem_wb_pc_plus_4),
         .wb_reg_write_o (mem_wb_reg_write),
         .wb_mem_to_reg_o(mem_wb_mem_to_reg)
     );
@@ -356,7 +362,7 @@ module cpu_top (
     // 選擇要寫回暫存器檔案的資料來源
     assign mem_wb_data = (mem_wb_mem_to_reg == 2'b00) ? mem_wb_alu_result :  // ALU 結果
                         (mem_wb_mem_to_reg == 2'b01) ? mem_wb_mem_rdata :    // 記憶體資料
-                        (mem_wb_mem_to_reg == 2'b10) ? ex_mem_pc_plus_4 :    // PC+4（用於 JAL/JALR，来自EX/MEM）
+                        (mem_wb_mem_to_reg == 2'b10) ? mem_wb_pc_plus_4 :    // PC+4（用於 JAL/JALR，来自MEM/WB）
                         32'h0;                                                // 預設值
 
     //------------------------------------------------------------------------
