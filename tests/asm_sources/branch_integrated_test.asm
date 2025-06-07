@@ -191,6 +191,22 @@ signed_unsigned_complete:
     # 跳轉到程式結束
     beq x0, x0, end_program
 
+# 測試 JAL/JALR 指令整合
+test_jal:
+    addi x6, x0, 10
+    jal x7, jal_target
+
+jal_return:
+    addi x6, x6, 5
+    beq x0, x0, after_jal_test
+
+jal_target:
+    addi x6, x6, 5
+    jalr x0, x7, 0
+
+after_jal_test:
+    # 這裡可以繼續後續測試
+
 # 程式結束
 end_program:
     # 停止程式（無限迴圈）
