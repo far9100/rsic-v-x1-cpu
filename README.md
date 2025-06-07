@@ -7,8 +7,7 @@
 ```
 rsic-v-x1-cpu/
 ├── assembler/               # 組譯器
-│   ├── assembler.py        # Python 組譯器
-│   └── instructions.py     # 指令定義
+│   └── assembler.py        # Python 組譯器
 ├── hardware/               # 硬體設計
 │   ├── rtl/               # RTL 檔案
 │   │   ├── cpu_top.v      # CPU 頂層模組
@@ -24,31 +23,33 @@ rsic-v-x1-cpu/
 │   │   ├── hazard_detection_unit.v # 危險檢測單元
 │   │   ├── immediate_generator.v # 立即數產生器
 │   │   ├── multiplier.v   # 乘法器
-│   │   └── pipeline_reg_*.v # 管線暫存器
+│   │   ├── pipeline_reg_if_id.v   # IF/ID 管線暫存器
+│   │   ├── pipeline_reg_id_ex.v   # ID/EX 管線暫存器
+│   │   ├── pipeline_reg_ex_mem.v  # EX/MEM 管線暫存器
+│   │   ├── pipeline_reg_mem_wb.v  # MEM/WB 管線暫存器
 │   └── sim/               # 模擬檔案
 │       ├── tb_branch_test.v # 分支測試 testbench
-│       ├── tb_simple_jal_test.v # JAL測試 testbench
 │       ├── tb_add_test.v   # 加法測試 testbench
 │       └── tb_mul_test.v   # 乘法測試 testbench
 └── tests/                 # 測試程式
     ├── asm_sources/       # 組語原始檔
     │   ├── add_integrated_test.asm     # 加法測試
     │   ├── mul_integrated_test.asm     # 乘法測試
-    │   ├── branch_integrated_test.asm  # 分支測試（包含LUI）
-    │   └── simple_jal_test.asm        # JAL測試
+    │   ├── branch_integrated_test.asm  # 分支測試（包含LUI、JAL/JALR）
     └── hex_outputs/       # 組譯後的機器碼
 ```
 
 ## CPU 特性
 
-- **架構**: RISC-V 32I 基礎整數指令集
+- **架構**: RISC-V 32I 基礎整數指令集，支援 M 擴展 (MUL)
 - **管線**: 五級管線 (IF, ID, EX, MEM, WB)
 - **暫存器**: 32個 32-bit 通用暫存器
 - **記憶體**: 分離式指令和資料記憶體
 - **前遞**: 支援資料前遞避免部分危險
-- **危險檢測**: 完整的危險檢測單元
-- **分支**: 支援所有 RISC-V 分支指令
-- **乘法**: 支援乘法運算
+- **危險檢測**: 完整的危險檢測單元，支援載入-使用、分支等管線危險
+- **分支**: 支援所有 RISC-V 分支指令，分支單元獨立模組
+- **乘法**: 支援 MUL 指令（M 擴展）
+- **管線暫存器**: 各階段皆有獨立管線暫存器
 
 ## 支援的指令
 
@@ -57,6 +58,7 @@ rsic-v-x1-cpu/
 - `AND`, `OR`, `XOR`, `ANDI`, `ORI`, `XORI`
 - `SLL`, `SRL`, `SRA`, `SLLI`, `SRLI`, `SRAI`
 - `SLT`, `SLTU`, `SLTI`, `SLTIU`
+- `MUL` (M 擴展)
 
 ### 記憶體指令
 - `LW`, `LH`, `LB`, `LHU`, `LBU`
@@ -108,7 +110,7 @@ vvp mul_sim
 - 負數乘法
 - 大數乘法
 
-### 3. 分支測試 ✅
+### 3. 分支測試
 ```bash
 # 組譯測試程式
 python assembler/assembler.py ./tests/asm_sources/branch_integrated_test.asm -o ./tests/hex_outputs/branch_integrated_test.hex
@@ -121,59 +123,21 @@ vvp branch_sim
 ```
 
 **分支測試內容:**
-- ✅ BEQ (相等分支)
-- ✅ BNE (不等分支)  
-- ✅ BLT (小於分支, 有符號)
-- ✅ BGE (大於等於分支, 有符號)
-- ✅ BLTU (小於分支, 無符號)
-- ✅ BGEU (大於等於分支, 無符號)
-- ✅ 負數比較測試
-- ✅ 零值比較測試
-- ✅ 分支不採用情況
-- ✅ 簡化向前跳轉迴圈
-- ✅ 真實向後跳轉迴圈 (使用負數立即數)
-- ✅ LUI指令支援 - 實現Load Upper Immediate指令 ✅
-
-### 4. JAL測試 ✅ (獨立測試)
-```bash
-# 組譯測試程式
-python assembler/assembler.py tests/asm_sources/simple_jal_test.asm -o tests/hex_outputs/simple_jal_test.hex
-
-# 編譯 Verilog
-iverilog -o simple_jal_sim -I hardware/rtl hardware/sim/tb_simple_jal_test.v hardware/rtl/*.v
-
-# 執行模擬
-vvp simple_jal_sim
-```
-
-**JAL測試內容:**
-- ✅ JAL (跳轉並連結) - 獨立測試環境
-- ✅ JALR (暫存器跳轉並連結) - 獨立測試環境
-- ✅ 返回地址正確保存 (x7 = 0x00000008)
-- ✅ 跳轉目標地址正確計算
-- ✅ 最終結果驗證 (x6 = 20)
-
-### 尚未完成的測試 🚧
-| 測試項目 | 優先級 | 說明 |
-|---------|--------|------|
-| 分支測試中的JAL整合 | 高 | JAL (Jump and Link) 指令在分支測試中被註解，需要整合到分支測試流程 |
-| 分支測試中的JALR整合 | 高 | JALR (Jump and Link Register) 指令在分支測試中被註解，需要整合到分支測試流程 |
-| 記憶體測試 | 高 | 尚未實現 LW/LH/LB/LHU/LBU 和 SW/SH/SB 指令的完整測試 |?
-| 中斷處理 | 中 | 尚未實現中斷和異常處理機制 |?
-| 效能測試 | 低 | 尚未進行管線效能和吞吐量測試 |?
-| 邊界測試 | 中 | 尚未進行極端情況和邊界條件測試 |?
-
-## 已知問題 ⚠️
-- JAL/JALR指令未能整合至分支測試
-- 負數立即數測試部分疑似有 bug 尚未解決
-
-| 問題描述 | 嚴重程度 | 影響範圍 | 解決方案 |
-|---------|----------|----------|----------|
-| JAL/JALR指令未整合到分支測試 | 中 | 分支測試完整性 | 需要將註解的JAL/JALR測試重新整合到分支測試流程中 |
-| 前遞單元未處理分支指令 | 高 | 分支測試 | 需要修改前遞單元，增加對分支指令的支援 |
-| 記憶體存取未對齊 | 中 | 記憶體操作 | 需要實現記憶體對齊檢查和處理 |
-| 缺少除錯介面 | 低 | 開發效率 | 需要添加除錯介面，方便問題診斷 |
-| 缺少時序約束 | 中 | 時序分析 | 需要添加時序約束檔案 |
+- BEQ (相等分支)
+- BNE (不等分支)
+- BLT (小於分支, 有符號)
+- BGE (大於等於分支, 有符號)
+- BLTU (小於分支, 無符號)
+- BGEU (大於等於分支, 無符號)
+- 負數比較測試
+- 零值比較測試
+- 分支不採用情況
+- 簡化向前跳轉迴圈
+- 真實向後跳轉迴圈 (使用負數立即數)
+- LUI指令支援 (Load Upper Immediate)
+- JAL/JALR (跳轉並連結/暫存器跳轉並連結)
+- 有符號/無符號分支差異測試
+- 迴圈與跳轉邏輯完整驗證
 
 ## 開發工具
 

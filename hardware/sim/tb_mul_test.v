@@ -72,14 +72,16 @@ module tb_mul_test;
         end
     end
 
+    // 宣告 file handle
+    integer fp_process, fp_result;
+
     // 資料記憶體寫入邏輯（同步於時脈）
     always @(posedge clk) begin
         if (rst_n) begin // 只在非重置狀態下寫入
             if (d_mem_wen != 4'b0000 && d_mem_addr < 4*MEM_SIZE_WORDS) begin
                 if (d_mem_wen == 4'b1111) begin // 字組寫入
                     data_mem[d_mem_addr / 4] <= d_mem_wdata;
-                    // 顯示記憶體寫入以進行除錯
-                    $display("資料記憶體寫入：位址=0x%h，資料=0x%h", d_mem_addr, d_mem_wdata);
+                    $fdisplay(fp_process, "mem_write,%0t,0x%h,0x%h", $time, d_mem_addr, d_mem_wdata);
                 end
             end
         end
@@ -87,6 +89,8 @@ module tb_mul_test;
 
     // 時脈產生
     initial begin
+        fp_process = $fopen("mul_process.csv", "w");
+        fp_result  = $fopen("mul_result.csv", "w");
         clk = 0;
         forever #(CLK_PERIOD / 2) clk = ~clk;
     end
@@ -101,28 +105,45 @@ module tb_mul_test;
     // 模擬控制和監控
     integer cycle_count_sim = 0;
     initial begin
-        $display("開始 RISC-V CPU 乘法測試模擬...");
+        $fdisplay(fp_process, "開始 RISC-V CPU 乘法測試模擬...");
         wait (rst_n === 1);
-        $display("重置解除。CPU 操作開始於時間 %0t。", $time);
-
+        $fdisplay(fp_process, "重置解除。CPU 操作開始於時間 %0t。", $time);
         for (cycle_count_sim = 0; cycle_count_sim < MAX_SIM_CYCLES; cycle_count_sim = cycle_count_sim + 1) begin
             @(posedge clk);
-            // 每 50 個週期印出正在擷取的指令
             if (cycle_count_sim % 50 == 0) begin
-                $display("週期 %0d（模擬）：擷取指令：%h", cycle_count_sim, i_mem_rdata);
+                $fdisplay(fp_process, "cycle,%0d,%h", cycle_count_sim, i_mem_rdata);
             end
         end
-
-        $display("模擬完成於時間 %0t。", $time);
-        $display("");
-        $display("驗證用暫存器內容:");
-        $display("x7  (正數乘法)   = %0d", $signed(regs_flat_local[7*32 +: 32]));
-        $display("x8  (負數乘法)   = %0d", $signed(regs_flat_local[8*32 +: 32]));
-        $display("x13 (大數乘法)   = %0d", $signed(regs_flat_local[13*32 +: 32]));
-        $display("x17 (測試點4)    = %0d", $signed(regs_flat_local[17*32 +: 32]));
-        $display("x19 (測試點5)    = %0d", $signed(regs_flat_local[19*32 +: 32]));
-        $display("");
-        $display("乘法測試全部通過！");
+        // 結果csv：測試結果
+        $fdisplay(fp_result, "=== 乘法測試結果 ===");
+        if ($signed(regs_flat_local[7*32 +: 32]) == 42 &&
+            $signed(regs_flat_local[8*32 +: 32]) == -42 &&
+            $signed(regs_flat_local[13*32 +: 32]) == 123456789 &&
+            $signed(regs_flat_local[17*32 +: 32]) == 0 &&
+            $signed(regs_flat_local[19*32 +: 32]) == 1) begin
+            $fdisplay(fp_result, "PASS");
+        end else begin
+            $fdisplay(fp_result, "FAIL");
+        end
+        // 細項測試
+        $fdisplay(fp_result, "=== 細項測試 ===");
+        $fdisplay(fp_result, "正數乘法,%s", ($signed(regs_flat_local[7*32 +: 32]) == 42) ? "PASS" : "FAIL");
+        $fdisplay(fp_result, "負數乘法,%s", ($signed(regs_flat_local[8*32 +: 32]) == -42) ? "PASS" : "FAIL");
+        $fdisplay(fp_result, "大數乘法,%s", ($signed(regs_flat_local[13*32 +: 32]) == 123456789) ? "PASS" : "FAIL");
+        $fdisplay(fp_result, "測試點4,%s", ($signed(regs_flat_local[17*32 +: 32]) == 0) ? "PASS" : "FAIL");
+        $fdisplay(fp_result, "測試點5,%s", ($signed(regs_flat_local[19*32 +: 32]) == 1) ? "PASS" : "FAIL");
+        // 暫存器狀態
+        $fdisplay(fp_result, "=== 暫存器狀態 ===");
+        $fdisplay(fp_result, "x7,%0d", $signed(regs_flat_local[7*32 +: 32]));
+        $fdisplay(fp_result, "x8,%0d", $signed(regs_flat_local[8*32 +: 32]));
+        $fdisplay(fp_result, "x13,%0d", $signed(regs_flat_local[13*32 +: 32]));
+        $fdisplay(fp_result, "x17,%0d", $signed(regs_flat_local[17*32 +: 32]));
+        $fdisplay(fp_result, "x19,%0d", $signed(regs_flat_local[19*32 +: 32]));
+        // 調試信息
+        $fdisplay(fp_result, "=== 調試信息 ===");
+        $fdisplay(fp_result, "模擬完成於時間,%0t", $time);
+        $fclose(fp_process);
+        $fclose(fp_result);
         $finish;
     end
 

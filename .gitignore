@@ -1,5 +1,6 @@
 *.vcd
+*.csv
+*.hex
 add_sim
 mul_sim
 branch_sim
-git_sub/
