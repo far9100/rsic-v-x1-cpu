@@ -16,7 +16,9 @@ module reg_file (
     // 寫入埠（來自 WB 階段）
     input  wire [4:0]  rd_addr,        // 寫入埠的位址（rd）
     input  wire [31:0] rd_data,        // 要寫入的資料
-    input  wire        wen             // 寫入致能
+    input  wire        wen,            // 寫入致能
+
+    output wire [1023:0] regs_flat
 );
 
     // 32 個暫存器，每個 32 位元寬
@@ -54,5 +56,12 @@ module reg_file (
             end
         end
     end
+
+    genvar gi;
+    generate
+        for (gi = 0; gi < 32; gi = gi + 1) begin : flatten_regs
+            assign regs_flat[gi*32 +: 32] = registers[gi];
+        end
+    endgenerate
 
 endmodule

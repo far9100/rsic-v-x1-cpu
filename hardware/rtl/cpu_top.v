@@ -16,9 +16,9 @@ module cpu_top (
     output wire [31:0] d_mem_addr,
     output wire [31:0] d_mem_wdata,
     output wire [3:0]  d_mem_wen,    // 位元組啟用或字組啟用（例如：4'b1111 表示字組）
-    input  wire [31:0] d_mem_rdata
-    // output wire        d_mem_read,
-    // output wire        d_mem_write
+    input  wire [31:0] d_mem_rdata,
+
+    output wire [1023:0] regs_flat
 );
 
     // 內部連線（已定義位元寬度）
@@ -203,7 +203,8 @@ module cpu_top (
         .branch_o       (id_branch),
         .is_jal_o       (id_is_jal),
         .is_jalr_o      (id_is_jalr),
-        .funct3_o       (id_funct3)
+        .funct3_o       (id_funct3),
+        .regs_flat      (regs_flat)
         // .id_ex_bubble_o (id_ex_bubble) // 如果需要暫停則送到危險單元
     );
 

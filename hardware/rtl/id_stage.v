@@ -41,10 +41,12 @@ module id_stage (
     output wire        jump_o,         // 是否為跳躍指令（JAL, JALR）
     output wire        is_jal_o,       // 是否為 JAL 指令
     output wire        is_jalr_o,      // 是否為 JALR 指令
-    output wire [2:0]  funct3_o        // 分支指令的 funct3 欄位
+    output wire [2:0]  funct3_o,       // 分支指令的 funct3 欄位
 
     // 輸出到危害單元（如果在這裡檢測到因載入指令的資料相依性而需要停滯）
     // output wire        id_stall_o
+
+    output wire [1023:0] regs_flat
 );
 
     // 指令欄位提取
@@ -68,7 +70,8 @@ module id_stage (
         .rd_data     (wb_data_i),
         .wen         (wb_reg_write_i),
         .rs1_data    (rs1_data_o),
-        .rs2_data    (rs2_data_o)
+        .rs2_data    (rs2_data_o),
+        .regs_flat   (regs_flat)
     );
 
     // 寫入後暫存器值的除錯輸出

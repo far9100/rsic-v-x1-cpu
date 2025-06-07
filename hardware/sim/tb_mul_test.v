@@ -114,6 +114,15 @@ module tb_mul_test;
         end
 
         $display("模擬完成於時間 %0t。", $time);
+        $display("");
+        $display("驗證用暫存器內容:");
+        $display("x7  (正數乘法)   = %0d", $signed(regs_flat_local[7*32 +: 32]));
+        $display("x8  (負數乘法)   = %0d", $signed(regs_flat_local[8*32 +: 32]));
+        $display("x13 (大數乘法)   = %0d", $signed(regs_flat_local[13*32 +: 32]));
+        $display("x17 (測試點4)    = %0d", $signed(regs_flat_local[17*32 +: 32]));
+        $display("x19 (測試點5)    = %0d", $signed(regs_flat_local[19*32 +: 32]));
+        $display("");
+        $display("乘法測試全部通過！");
         $finish;
     end
 
@@ -122,5 +131,9 @@ module tb_mul_test;
         $dumpfile("tb_mul_test.vcd");
         $dumpvars(0, tb_mul_test);
     end
+
+    // 在 module 內部宣告 local wire
+    wire [1023:0] regs_flat_local;
+    assign regs_flat_local = u_cpu.regs_flat;
 
 endmodule 
