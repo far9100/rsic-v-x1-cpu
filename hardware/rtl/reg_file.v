@@ -30,7 +30,7 @@ module reg_file (
     always @(posedge clk) begin
         if (wen && (rd_addr != 5'b00000)) begin // 不寫入 x0
             registers[rd_addr] <= rd_data;
-            // $display("暫存器寫入：x%0d = %h", rd_addr, rd_data);
+            $display("暫存器寫入：x%0d = %h", rd_addr, rd_data);
         end
     end
 

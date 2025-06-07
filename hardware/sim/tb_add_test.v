@@ -82,7 +82,7 @@ module tb_add_test;
                 if (d_mem_wen == 4'b1111) begin // 字組寫入
                     data_mem[d_mem_addr / 4] <= d_mem_wdata;
                     // 顯示記憶體寫入以進行除錯
-                    $display("資料記憶體寫入：位址=0x%h，資料=0x%h", d_mem_addr, d_mem_wdata);
+                    $display("資料記憶體寫入：位址=0x%h，資料=0x%h (sw來源暫存器值=0x%h)", d_mem_addr, d_mem_wdata, d_mem_wdata);
                 end
             end
         end
@@ -116,6 +116,27 @@ module tb_add_test;
             end
         end
 
+        // 模擬結束前，顯示所有驗證用記憶體內容
+        $display("驗證用記憶體內容:");
+        $display("data_mem[0x100/4]   = %0d", data_mem[32'h100/4]);
+        $display("data_mem[0x100/4+1] = %0d", data_mem[32'h100/4+1]);
+        $display("data_mem[0x100/4+2] = %0d", data_mem[32'h100/4+2]);
+        $display("data_mem[0x100/4+3] = %0d", data_mem[32'h100/4+3]);
+        $display("data_mem[0x100/4+4] = %0d", data_mem[32'h100/4+4]);
+        $display("data_mem[0x100/4+5] = %0d", data_mem[32'h100/4+5]);
+
+        // 模擬結束前，檢查測試結果
+        if (data_mem[32'h100/4]   == 3   &&
+            data_mem[32'h100/4+1] == 30  &&
+            data_mem[32'h100/4+2] == 2   &&
+            data_mem[32'h100/4+3] == 0   &&
+            data_mem[32'h100/4+4] == 7   &&
+            data_mem[32'h100/4+5] == 300) begin
+            $display("加法測試全部通過！");
+        end else begin
+            $display("加法測試失敗！");
+            $display("實際結果: %0d %0d %0d %0d %0d %0d", data_mem[32'h100/4], data_mem[32'h100/4+1], data_mem[32'h100/4+2], data_mem[32'h100/4+3], data_mem[32'h100/4+4], data_mem[32'h100/4+5]);
+        end
         $display("模擬完成於時間 %0t。", $time);
         $finish;
     end

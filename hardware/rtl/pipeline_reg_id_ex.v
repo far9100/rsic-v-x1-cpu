@@ -113,6 +113,7 @@ module pipeline_reg_id_ex (
             ex_is_jal_o    <= NOP_IS_JAL;
             ex_is_jalr_o   <= NOP_IS_JALR;
             ex_funct3_o    <= 3'b0;
+            $display("[ID/EX] FLUSH/BUBBLE at cycle %0t: rd_addr=%0d, reg_write=0", $time, id_rd_addr_i, id_reg_write_i);
         end
         else begin // 正常運作：鎖存輸入
             ex_pc_plus_4_o <= id_pc_plus_4_i;
@@ -133,6 +134,7 @@ module pipeline_reg_id_ex (
             ex_is_jal_o    <= id_is_jal_i;
             ex_is_jalr_o   <= id_is_jalr_i;
             ex_funct3_o    <= id_funct3_i;
+            $display("[ID/EX] NORMAL at cycle %0t: rd_addr=%0d, reg_write=%0d", $time, id_rd_addr_i, id_reg_write_i);
         end
     end
 
