@@ -139,6 +139,23 @@ vvp branch_sim
 - 有符號/無符號分支差異測試
 - 迴圈與跳轉邏輯完整驗證
 
+### 4. 斐波那契數列測試
+```bash
+# 組譯測試程式
+python assembler/assembler.py ./tests/asm_sources/fibonacci_test.asm -o ./tests/hex_outputs/fibonacci_test.hex
+
+# 編譯 Verilog
+iverilog -o fibonacci_sim hardware/sim/tb_fibonacci_test.v hardware/rtl/*.v
+
+# 執行模擬
+vvp fibonacci_sim
+```
+
+**斐波那契測試內容:**
+- 使用迴圈計算前 10 個斐波那契數（1, 1, 2, 3, 5, 8, 13, 21, 34, 55）
+- 結果會寫入資料記憶體 0x200 開始的連續位置
+- 模擬結束後，`fibonacci_result.csv` 會顯示 PASS/FAIL 及每一項細節
+
 ## 開發工具
 
 - **模擬器**: Icarus Verilog
