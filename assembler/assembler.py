@@ -275,6 +275,18 @@ def assemble_line(line_content, labels, current_address):
     elif instr == 'mul':
         machine_code = assemble_r_type(
             args[0], args[1], args[2], FUNCT3_MUL, FUNCT7_MULDIV, OPCODE_OP)
+    elif instr == 'div':
+        machine_code = assemble_r_type(
+            args[0], args[1], args[2], FUNCT3_DIV, FUNCT7_MULDIV, OPCODE_OP)
+    elif instr == 'divu':
+        machine_code = assemble_r_type(
+            args[0], args[1], args[2], FUNCT3_DIVU, FUNCT7_MULDIV, OPCODE_OP)
+    elif instr == 'rem':
+        machine_code = assemble_r_type(
+            args[0], args[1], args[2], FUNCT3_REM, FUNCT7_MULDIV, OPCODE_OP)
+    elif instr == 'remu':
+        machine_code = assemble_r_type(
+            args[0], args[1], args[2], FUNCT3_REMU, FUNCT7_MULDIV, OPCODE_OP)
     elif instr == 'lw':  # lw rd, offset(rs1) -> args: rd, offset, rs1
         machine_code = assemble_i_type(
             args[0], args[2], args[1], FUNCT3_LW, OPCODE_LOAD, labels, current_address)

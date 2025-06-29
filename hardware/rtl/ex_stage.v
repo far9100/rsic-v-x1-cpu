@@ -64,6 +64,8 @@ module ex_stage (
     wire [31:0] alu_operand_b;
     wire [31:0] alu_result_internal;
     wire [31:0] mul_result_internal;
+    wire [31:0] div_result_internal;
+    wire        div_ready;
 
     // 將前遞後的操作數傳給 ALU
     assign alu_operand_a = forwarded_rs1_data;
@@ -88,6 +90,18 @@ module ex_stage (
         .result_o    (mul_result_internal)
     );
 
+    // 除法器實例 - 直接使用前遞後的資料
+    divider u_divider (
+        .clk         (clk),
+        .rst_n       (rst_n),
+        .operand_a_i (forwarded_rs1_data),
+        .operand_b_i (forwarded_rs2_data),
+        .div_op_i    (alu_op_i),
+        .div_valid_i (alu_op_i[3:2] == 2'b11), // 檢測除法指令（DIV/DIVU/REM/REMU）
+        .result_o    (div_result_internal),
+        .div_ready_o (div_ready)
+    );
+
     // 分支單元實例
     branch_unit u_branch_unit (
         .clk             (clk),
@@ -105,7 +119,9 @@ module ex_stage (
         .is_jump_o       () // 未使用
     );
 
-    // 選擇 ALU 或乘法器的結果
-    assign alu_result_o = (alu_op_i == 4'b1010) ? mul_result_internal : alu_result_internal;
+    // 選擇 ALU、乘法器或除法器的結果
+    assign alu_result_o = (alu_op_i == 4'b1010) ? mul_result_internal :
+                         (alu_op_i[3:2] == 2'b11) ? div_result_internal :
+                         alu_result_internal;
 
 endmodule

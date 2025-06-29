@@ -1,14 +1,14 @@
-// RISC-V 32IM CPU 乘法測試平台
-// 檔案：hardware/sim/tb_mul_test.v
+// RISC-V 32I CPU 埃拉托色尼篩法測試平台
+// 檔案：hardware/sim/tb_prime_sieve_test.v
 
 `timescale 1ns / 1ps
 
-module tb_mul_test;
+module tb_prime_sieve_test;
 
     // 參數
     localparam CLK_PERIOD = 10; // 時脈週期（納秒）（例如，100 MHz 時脈）
     localparam RESET_DURATION = CLK_PERIOD * 5; // 重置保持時間
-    localparam MAX_SIM_CYCLES = 500; // 最大模擬週期數
+    localparam MAX_SIM_CYCLES = 30000; // 最大模擬週期數（增加以容納質數計算）
     localparam MEM_SIZE_WORDS = 1024; // 記憶體大小（字組數）
 
     // 測試平台信號
@@ -43,7 +43,7 @@ module tb_mul_test;
     initial begin
         // 從 .hex 檔案載入指令（例如，由組譯器產生）
         // 重要：確保此路徑相對於執行 vvp 的位置是正確的（通常是專案根目錄）
-        $readmemh("tests/hex_outputs/mul_integrated_test.hex", instr_mem);
+        $readmemh("./tests/hex_outputs/prime_sieve_test.hex", instr_mem);
         
         // 初始化資料記憶體（例如，設為零）
         for (i = 0; i < MEM_SIZE_WORDS; i = i + 1) begin
@@ -89,8 +89,8 @@ module tb_mul_test;
 
     // 時脈產生
     initial begin
-        fp_process = $fopen("mul_process.csv", "w");
-        fp_result  = $fopen("mul_result.csv", "w");
+        fp_process = $fopen("prime_sieve_process.csv", "w");
+        fp_result  = $fopen("prime_sieve_result.csv", "w");
         clk = 0;
         forever #(CLK_PERIOD / 2) clk = ~clk;
     end
@@ -105,45 +105,59 @@ module tb_mul_test;
     // 模擬控制和監控
     integer cycle_count_sim = 0;
     initial begin
-        $fdisplay(fp_process, "開始 RISC-V CPU 乘法測試模擬...");
+        $fdisplay(fp_process, "開始 RISC-V CPU 埃拉托色尼篩法測試模擬...");
         wait (rst_n === 1);
         $fdisplay(fp_process, "重置解除。CPU 操作開始於時間 %0t。", $time);
         for (cycle_count_sim = 0; cycle_count_sim < MAX_SIM_CYCLES; cycle_count_sim = cycle_count_sim + 1) begin
             @(posedge clk);
-            if (cycle_count_sim % 50 == 0) begin
+            if (cycle_count_sim % 100 == 0) begin
                 $fdisplay(fp_process, "cycle,%0d,%h", cycle_count_sim, i_mem_rdata);
             end
         end
+        
         // 結果csv：測試結果
-        $fdisplay(fp_result, "=== 乘法測試結果 ===");
-        if ($signed(regs_flat_local[7*32 +: 32]) == 42 &&
-            $signed(regs_flat_local[10*32 +: 32]) == -15 &&
-            $signed(regs_flat_local[13*32 +: 32]) == 48 &&
-            $signed(regs_flat_local[16*32 +: 32]) == 63 &&
-            $signed(regs_flat_local[19*32 +: 32]) == 16800) begin
+        $fdisplay(fp_result, "=== 埃拉托色尼篩法測試結果 ===");
+        if (data_mem[32'h200/4]   == 6  &&  // 15以內質數個數: 6
+            data_mem[32'h200/4+1] == 9  &&  // 25以內質數個數: 9
+            data_mem[32'h200/4+2] == 11 &&  // 35以內質數個數: 11
+            data_mem[32'h200/4+3] == 15 &&  // 50以內質數個數: 15
+            data_mem[32'h200/4+4] == 19) begin  // 70以內質數個數: 19
             $fdisplay(fp_result, "PASS");
         end else begin
             $fdisplay(fp_result, "FAIL");
         end
+        
         // 細項測試
         $fdisplay(fp_result, "=== 細項測試 ===");
-        $fdisplay(fp_result, "正數乘法,%s", ($signed(regs_flat_local[7*32 +: 32]) == 42) ? "PASS" : "FAIL");
-        $fdisplay(fp_result, "負數乘法,%s", ($signed(regs_flat_local[10*32 +: 32]) == -15) ? "PASS" : "FAIL");
-        $fdisplay(fp_result, "大數乘法,%s", ($signed(regs_flat_local[19*32 +: 32]) == 16800) ? "PASS" : "FAIL");
-        $fdisplay(fp_result, "測試點4,%s", ($signed(regs_flat_local[13*32 +: 32]) == 48) ? "PASS" : "FAIL");
-        $fdisplay(fp_result, "測試點5,%s", ($signed(regs_flat_local[16*32 +: 32]) == 63) ? "PASS" : "FAIL");
-        // 暫存器狀態
-        $fdisplay(fp_result, "=== 暫存器狀態 ===");
-        $fdisplay(fp_result, "x7,%0d", $signed(regs_flat_local[7*32 +: 32]));
-        $fdisplay(fp_result, "x8,%0d", $signed(regs_flat_local[8*32 +: 32]));
-        $fdisplay(fp_result, "x10,%0d", $signed(regs_flat_local[10*32 +: 32]));
-        $fdisplay(fp_result, "x13,%0d", $signed(regs_flat_local[13*32 +: 32]));
-        $fdisplay(fp_result, "x16,%0d", $signed(regs_flat_local[16*32 +: 32]));
-        $fdisplay(fp_result, "x17,%0d", $signed(regs_flat_local[17*32 +: 32]));
-        $fdisplay(fp_result, "x19,%0d", $signed(regs_flat_local[19*32 +: 32]));
+        $fdisplay(fp_result, "15以內質數個數,%s (Expected: 6, Got: %0d)", 
+                 (data_mem[32'h200/4] == 6) ? "PASS" : "FAIL", data_mem[32'h200/4]);
+        $fdisplay(fp_result, "25以內質數個數,%s (Expected: 9, Got: %0d)", 
+                 (data_mem[32'h200/4+1] == 9) ? "PASS" : "FAIL", data_mem[32'h200/4+1]);
+        $fdisplay(fp_result, "35以內質數個數,%s (Expected: 11, Got: %0d)", 
+                 (data_mem[32'h200/4+2] == 11) ? "PASS" : "FAIL", data_mem[32'h200/4+2]);
+        $fdisplay(fp_result, "50以內質數個數,%s (Expected: 15, Got: %0d)", 
+                 (data_mem[32'h200/4+3] == 15) ? "PASS" : "FAIL", data_mem[32'h200/4+3]);
+        $fdisplay(fp_result, "70以內質數個數,%s (Expected: 19, Got: %0d)", 
+                 (data_mem[32'h200/4+4] == 19) ? "PASS" : "FAIL", data_mem[32'h200/4+4]);
+        
+        // 質數列表參考
+        $fdisplay(fp_result, "=== 質數列表參考 ===");
+        $fdisplay(fp_result, "15以內質數: 2,3,5,7,11,13 (共6個)");
+        $fdisplay(fp_result, "25以內質數: +17,19,23 (共9個)");  
+        $fdisplay(fp_result, "35以內質數: +29,31 (共11個)");
+        $fdisplay(fp_result, "50以內質數: +37,41,43,47 (共15個)");
+        $fdisplay(fp_result, "70以內質數: +53,59,61,67 (共19個)");
+        
+        // 暫存器/記憶體狀態
+        $fdisplay(fp_result, "=== 記憶體狀態 ===");
+        for (i = 0; i < 5; i = i + 1) begin
+            $fdisplay(fp_result, "data_mem[%0d],%0d", 128+i, data_mem[32'h200/4+i]);
+        end
+        
         // 調試信息
         $fdisplay(fp_result, "=== 調試信息 ===");
         $fdisplay(fp_result, "模擬完成於時間,%0t", $time);
+        $fdisplay(fp_result, "總模擬週期數,%0d", cycle_count_sim);
         $fclose(fp_process);
         $fclose(fp_result);
         $finish;
@@ -151,12 +165,8 @@ module tb_mul_test;
 
     // 波形輸出
     initial begin
-        $dumpfile("tb_mul_test.vcd");
-        $dumpvars(0, tb_mul_test);
+        $dumpfile("tb_prime_sieve_test.vcd");
+        $dumpvars(0, tb_prime_sieve_test);
     end
-
-    // 在 module 內部宣告 local wire
-    wire [1023:0] regs_flat_local;
-    assign regs_flat_local = u_cpu.regs_flat;
 
 endmodule 

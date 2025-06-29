@@ -15,6 +15,11 @@
 `define ALU_OP_OR   4'b1000  // 或
 `define ALU_OP_AND  4'b1001  // 且
 `define ALU_OP_MUL  4'b1010  // 乘法指令（M 擴展）
+// M 擴展除法指令
+`define ALU_OP_DIV  4'b1100  // 有符號除法
+`define ALU_OP_DIVU 4'b1101  // 無符號除法
+`define ALU_OP_REM  4'b1110  // 有符號餘數
+`define ALU_OP_REMU 4'b1111  // 無符號餘數
 // 如果需要，可加入其他乘法運算如 MULH, MULHSU, MULHU
 // `define ALU_OP_LUI_AUIPC 4'b1011 // 如果 ALU 直接傳遞運算元 B，則為 LUI/AUIPC 的特殊情況
 
@@ -130,14 +135,14 @@ module control_unit (
                 if (funct7 == 7'b0000001) begin // M 擴展指令
                     case (funct3)
                         3'b000: alu_op_o = `ALU_OP_MUL;   // MUL
-                        // 加入其他 M 擴展運算如 MULH, DIV 等
+                        // 加入其他 M 擴展運算如 MULH 等
                         // 3'b001: alu_op_o = `ALU_OP_MULH;  // MULH
                         // 3'b010: alu_op_o = `ALU_OP_MULHSU;// MULHSU
                         // 3'b011: alu_op_o = `ALU_OP_MULHU; // MULHU
-                        // 3'b100: alu_op_o = `ALU_OP_DIV;   // DIV
-                        // 3'b101: alu_op_o = `ALU_OP_DIVU;  // DIVU
-                        // 3'b110: alu_op_o = `ALU_OP_REM;   // REM
-                        // 3'b111: alu_op_o = `ALU_OP_REMU;  // REMU
+                        3'b100: alu_op_o = `ALU_OP_DIV;   // DIV
+                        3'b101: alu_op_o = `ALU_OP_DIVU;  // DIVU
+                        3'b110: alu_op_o = `ALU_OP_REM;   // REM
+                        3'b111: alu_op_o = `ALU_OP_REMU;  // REMU
                         default: alu_op_o = `ALU_OP_ADD; // 未處理的 M 擴展指令預設值
                     endcase
                 end else begin // 標準 R 型 I 擴展
