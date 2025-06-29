@@ -30,12 +30,18 @@ rsic-v-x1-cpu/
 │   └── sim/               # 模擬檔案
 │       ├── tb_branch_test.v # 分支測試 testbench
 │       ├── tb_add_test.v   # 加法測試 testbench
-│       └── tb_mul_test.v   # 乘法測試 testbench
+│       ├── tb_mul_test.v   # 乘法測試 testbench
+│       ├── tb_fibonacci_test.v # 斐波那契測試 testbench
+│       ├── tb_factorial_test.v # 階乘計算測試 testbench
+│       └── tb_gcd_test.v       # 輾轉相除法測試 testbench
 └── tests/                 # 測試程式
     ├── asm_sources/       # 組語原始檔
     │   ├── add_integrated_test.asm     # 加法測試
     │   ├── mul_integrated_test.asm     # 乘法測試
     │   ├── branch_integrated_test.asm  # 分支測試（包含LUI、JAL/JALR）
+    │   ├── fibonacci_test.asm          # 斐波那契數列測試
+    │   ├── factorial_test.asm          # 階乘計算測試
+    │   └── gcd_test.asm                # 輾轉相除法測試
     └── hex_outputs/       # 組譯後的機器碼
 ```
 
@@ -155,6 +161,52 @@ vvp fibonacci_sim
 - 使用迴圈計算前 10 個斐波那契數（1, 1, 2, 3, 5, 8, 13, 21, 34, 55）
 - 結果會寫入資料記憶體 0x200 開始的連續位置
 - 模擬結束後，`fibonacci_result.csv` 會顯示 PASS/FAIL 及每一項細節
+
+### 5. 階乘計算測試
+```bash
+# 組譯測試程式
+python assembler/assembler.py ./tests/asm_sources/factorial_test.asm -o ./tests/hex_outputs/factorial_test.hex
+
+# 編譯 Verilog
+iverilog -o factorial_sim hardware/sim/tb_factorial_test.v hardware/rtl/*.v
+
+# 執行模擬
+vvp factorial_sim
+```
+
+**階乘測試內容:**
+- 使用迴圈計算 1 到 10 的階乘（1!, 2!, 3!, ..., 10!）
+- 每個階乘值使用內部迴圈進行計算
+- 結果會寫入資料記憶體 0x200 開始的連續位置
+- 測試複雜的雙層迴圈邏輯和乘法運算
+- 預期結果：1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800
+- 模擬結束後，`factorial_result.csv` 會顯示 PASS/FAIL 及每一項細節
+
+### 6. 輾轉相除法測試
+```bash
+# 組譯測試程式
+python assembler/assembler.py ./tests/asm_sources/gcd_test.asm -o ./tests/hex_outputs/gcd_test.hex
+
+# 編譯 Verilog
+iverilog -o gcd_sim hardware/sim/tb_gcd_test.v hardware/rtl/*.v
+
+# 執行模擬
+vvp gcd_sim
+```
+
+**輾轉相除法測試內容:**
+- 使用輾轉相除法（歐几里德算法）計算五對數字的最大公因數
+- 測試數據對（100以內）：
+  - GCD(12, 8) = 4
+  - GCD(48, 18) = 6  
+  - GCD(35, 21) = 7
+  - GCD(60, 45) = 15
+  - GCD(17, 13) = 1
+- 結果會寫入資料記憶體 0x200 開始的連續位置
+- 測試函數呼叫、迴圈和條件分支邏輯
+- 使用減法實現模除運算（a % b）
+- 涵蓋不同情況：小數字、大數字、質數結果、較大公因數、互質數字
+- 模擬結束後，`gcd_result.csv` 會顯示 PASS/FAIL 及每項詳細結果
 
 ## 開發工具
 
