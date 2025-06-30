@@ -35,7 +35,8 @@ rsic-v-x1-cpu/
 │       ├── tb_factorial_test.v # 階乘計算測試 testbench
 │       ├── tb_gcd_test.v       # 輾轉相除法測試 testbench
 │       ├── tb_div_integrated_test.v # 除法測試 testbench
-│       └── tb_prime_sieve_test.v    # 埃拉托色尼篩法測試 testbench
+│       ├── tb_prime_sieve_test.v    # 埃拉托色尼篩法測試 testbench
+│       └── tb_hash_test.v           # 哈希運算測試 testbench
 └── tests/                 # 測試程式
     ├── asm_sources/       # 組語原始檔
     │   ├── add_integrated_test.asm     # 加法測試
@@ -45,7 +46,8 @@ rsic-v-x1-cpu/
     │   ├── factorial_test.asm          # 階乘計算測試
     │   ├── gcd_test.asm                # 輾轉相除法測試
     │   ├── div_integrated_test.asm     # 除法測試
-    │   └── prime_sieve_test.asm        # 埃拉托色尼篩法測試
+    │   ├── prime_sieve_test.asm        # 埃拉托色尼篩法測試
+    │   └── hash_test.asm               # 哈希運算測試
     └── hex_outputs/       # 組譯後的機器碼
 ```
 
@@ -264,6 +266,37 @@ vvp prime_sieve_sim
 - 模擬結束後，`prime_sieve_result.csv` 會顯示 PASS/FAIL 及每一項細節
 - 測試複雜的數學運算和迴圈邏輯
 - **所有測試項目均完全通過** ✅
+
+### 9. 哈希運算測試 (新增)
+```bash
+# 組譯測試程式
+python assembler/assembler.py ./tests/asm_sources/hash_test.asm -o ./tests/hex_outputs/hash_test.hex
+
+# 編譯 Verilog
+iverilog -o hash_sim hardware/sim/tb_hash_test.v hardware/rtl/*.v
+
+# 執行模擬
+vvp hash_sim
+```
+
+**哈希運算測試內容:**
+- 使用簡化哈希算法計算不同數值序列的哈希值
+- 算法：`hash = 331; for each data: hash = (hash * 3) + data, hash %= 10000, 確保非零`
+- 測試數據：
+  - 測試1：{12, 34} - 2個數值 → 0xfffffcd1
+  - 測試2：{56, 78, 90} - 3個數值 → 0xfffff695
+  - 測試3：{11, 22, 33, 44} - 4個數值 → 0xffffe66a
+  - 測試4：{1, 2, 3, 4, 5} - 5個數值 → 0xffffadee
+  - 測試5：{99, 88, 77, 66, 55, 44} - 6個數值 → 0xffff046b
+- 結果會寫入資料記憶體 0x300 開始的連續位置
+- 測試位移、邏輯運算、迴圈控制和記憶體存取
+- 驗證哈希值非零性和唯一性
+
+**測試輸出檔案:**
+- 產生 `hash_result.csv` 和 `hash_process.csv`
+- 檢查所有哈希值都不為零且互不相同
+- 提供統計資訊如哈希範圍和平均值
+- **所有測試項目均完全通過 (5/5)** ✅
 
 
 ## 開發工具
