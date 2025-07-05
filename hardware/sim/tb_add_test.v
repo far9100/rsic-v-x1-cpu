@@ -92,8 +92,8 @@ module tb_add_test;
 
     // 時脈產生
     initial begin
-        fp_process = $fopen("add_process.csv", "w");
-        fp_result  = $fopen("add_result.csv", "w");
+        fp_process = $fopen("tests/output/add_process.csv", "w");
+        fp_result  = $fopen("tests/output/add_result.csv", "w");
         clk = 0;
         forever #(CLK_PERIOD / 2) clk = ~clk;
     end
@@ -152,7 +152,7 @@ module tb_add_test;
 
     // 波形輸出
     initial begin
-        $dumpfile("tb_add_test.vcd");
+        $dumpfile("tests/output/tb_add_test.vcd");
         $dumpvars(0, tb_add_test);
     end
 

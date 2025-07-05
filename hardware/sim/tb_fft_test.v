@@ -88,8 +88,8 @@ module tb_fft_test;
 
     // 時脈產生
     initial begin
-        fp_process = $fopen("fft_process.csv", "w");
-        fp_result  = $fopen("fft_result.csv", "w");
+        fp_process = $fopen("tests/output/fft_process.csv", "w");
+        fp_result  = $fopen("tests/output/fft_result.csv", "w");
         clk = 0;
         forever #(CLK_PERIOD / 2) clk = ~clk;
     end
@@ -224,7 +224,7 @@ module tb_fft_test;
 
     // 波形輸出
     initial begin
-        $dumpfile("tb_fft_test.vcd");
+        $dumpfile("tests/output/tb_fft_test.vcd");
         $dumpvars(0, tb_fft_test);
     end
 

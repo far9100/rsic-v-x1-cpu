@@ -117,8 +117,8 @@ module tb_convolution_test;
         test_complete = 0;
         
         // 開啟CSV檔案
-        process_file = $fopen("convolution_process.csv", "w");
-        result_file = $fopen("convolution_result.csv", "w");
+        process_file = $fopen("tests/output/convolution_process.csv", "w");
+        result_file = $fopen("tests/output/convolution_result.csv", "w");
         
         // 寫入CSV標題
         $fwrite(process_file, "Cycle,PC,Instruction,Register_State,Memory_Access,Notes\n");
@@ -247,6 +247,12 @@ module tb_convolution_test;
         if (cycle_count % 500 == 0 && cycle_count > 0) begin
             $display("週期 %d: PC=0x%x, 測試進行中...", cycle_count, i_mem_addr);
         end
+    end
+    
+    // 波形輸出
+    initial begin
+        $dumpfile("tests/output/tb_convolution_test.vcd");
+        $dumpvars(0, tb_convolution_test);
     end
     
 endmodule 

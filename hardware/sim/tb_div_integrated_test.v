@@ -88,8 +88,8 @@ module tb_div_integrated_test;
 
     // 時脈產生
     initial begin
-        fp_process = $fopen("div_integrated_process.csv", "w");
-        fp_result  = $fopen("div_integrated_result.csv", "w");
+        fp_process = $fopen("tests/output/div_integrated_process.csv", "w");
+        fp_result  = $fopen("tests/output/div_integrated_result.csv", "w");
         clk = 0;
         forever #(CLK_PERIOD / 2) clk = ~clk;
     end
@@ -176,7 +176,7 @@ module tb_div_integrated_test;
 
     // 波形輸出
     initial begin
-        $dumpfile("tb_div_integrated_test.vcd");
+        $dumpfile("tests/output/tb_div_integrated_test.vcd");
         $dumpvars(0, tb_div_integrated_test);
     end
 

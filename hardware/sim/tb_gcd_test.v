@@ -89,8 +89,8 @@ module tb_gcd_test;
 
     // 時脈產生
     initial begin
-        fp_process = $fopen("gcd_process.csv", "w");
-        fp_result  = $fopen("gcd_result.csv", "w");
+        fp_process = $fopen("tests/output/gcd_process.csv", "w");
+        fp_result  = $fopen("tests/output/gcd_result.csv", "w");
         clk = 0;
         forever #(CLK_PERIOD / 2) clk = ~clk;
     end
@@ -155,7 +155,7 @@ module tb_gcd_test;
 
     // 波形輸出
     initial begin
-        $dumpfile("tb_gcd_test.vcd");
+        $dumpfile("tests/output/tb_gcd_test.vcd");
         $dumpvars(0, tb_gcd_test);
     end
 

@@ -42,8 +42,8 @@ module tb_branch_test;
     
     // 時鐘產生
     initial begin
-        fp_process = $fopen("branch_process.csv", "w");
-        fp_result  = $fopen("branch_result.csv", "w");
+        fp_process = $fopen("tests/output/branch_process.csv", "w");
+        fp_result  = $fopen("tests/output/branch_result.csv", "w");
         clk = 0;
         forever #5 clk = ~clk; // 100MHz 時鐘
     end
@@ -185,7 +185,7 @@ module tb_branch_test;
     
     // 產生波形檔案
     initial begin
-        $dumpfile("tb_branch_test.vcd");
+        $dumpfile("tests/output/tb_branch_test.vcd");
         $dumpvars(0, tb_branch_test);
     end
 

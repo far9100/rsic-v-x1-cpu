@@ -97,8 +97,8 @@ module tb_bubble_sort_test;
 
     // 時脈產生
     initial begin
-        fp_process = $fopen("bubble_sort_process.csv", "w");
-        fp_result  = $fopen("bubble_sort_result.csv", "w");
+        fp_process = $fopen("tests/output/bubble_sort_process.csv", "w");
+        fp_result  = $fopen("tests/output/bubble_sort_result.csv", "w");
         
         // 寫入CSV標頭
         $fdisplay(fp_process, "==== 氣泡排序執行過程記錄 ====");
@@ -283,7 +283,7 @@ module tb_bubble_sort_test;
 
     // 波形輸出
     initial begin
-        $dumpfile("tb_bubble_sort_test.vcd");
+        $dumpfile("tests/output/tb_bubble_sort_test.vcd");
         $dumpvars(0, tb_bubble_sort_test);
     end
 

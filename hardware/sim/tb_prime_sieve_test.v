@@ -89,8 +89,8 @@ module tb_prime_sieve_test;
 
     // 時脈產生
     initial begin
-        fp_process = $fopen("prime_sieve_process.csv", "w");
-        fp_result  = $fopen("prime_sieve_result.csv", "w");
+        fp_process = $fopen("tests/output/prime_sieve_process.csv", "w");
+        fp_result  = $fopen("tests/output/prime_sieve_result.csv", "w");
         clk = 0;
         forever #(CLK_PERIOD / 2) clk = ~clk;
     end
@@ -165,7 +165,7 @@ module tb_prime_sieve_test;
 
     // 波形輸出
     initial begin
-        $dumpfile("tb_prime_sieve_test.vcd");
+        $dumpfile("tests/output/tb_prime_sieve_test.vcd");
         $dumpvars(0, tb_prime_sieve_test);
     end
 

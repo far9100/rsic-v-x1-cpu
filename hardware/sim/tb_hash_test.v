@@ -88,8 +88,8 @@ module tb_hash_test;
 
     // 時脈產生
     initial begin
-        fp_process = $fopen("hash_process.csv", "w");
-        fp_result  = $fopen("hash_result.csv", "w");
+        fp_process = $fopen("tests/output/hash_process.csv", "w");
+        fp_result  = $fopen("tests/output/hash_result.csv", "w");
         clk = 0;
         forever #(CLK_PERIOD / 2) clk = ~clk;
     end
@@ -197,7 +197,7 @@ module tb_hash_test;
 
     // 波形輸出
     initial begin
-        $dumpfile("tb_hash_test.vcd");
+        $dumpfile("tests/output/tb_hash_test.vcd");
         $dumpvars(0, tb_hash_test);
     end
 
