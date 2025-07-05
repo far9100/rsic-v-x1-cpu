@@ -1,6 +1,6 @@
 // RISC-V 32I CPU 氣泡排序測試平台
 // 檔案：hardware/sim/tb_bubble_sort_test.v
-// 功能：測試三個數值的氣泡排序功能
+// 功能：測試十個數值的氣泡排序功能
 
 `timescale 1ns / 1ps
 
