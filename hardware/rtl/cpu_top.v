@@ -106,6 +106,7 @@ module cpu_top (
     // EX/MEM
     wire [31:0] ex_mem_alu_result;
     wire [31:0] ex_mem_rs2_data; // 用於 sw 指令
+    wire [31:0] ex_forwarded_rs2_data; // 前遞後的 rs2_data（用於儲存指令）
     wire [4:0]  ex_mem_rd_addr;
     // MEM 階段的控制信號
     wire        ex_mem_mem_read;
@@ -131,10 +132,16 @@ module cpu_top (
     //------------------------------------------------------------------------
     // 危險檢測邏輯
     //------------------------------------------------------------------------
-    // 簡化的載入-使用危險檢測
-    wire load_hazard_rs1 = (ex_mem_mem_read_ctrl && (ex_mem_rd_addr_for_ex != 5'b0) && (ex_mem_rd_addr_for_ex == id_ex_rs1_addr));
-    wire load_hazard_rs2 = (ex_mem_mem_read_ctrl && (ex_mem_rd_addr_for_ex != 5'b0) && (ex_mem_rd_addr_for_ex == id_ex_rs2_addr));
+    // 修復 4: 正確的載入-使用危險檢測邏輯
+    // 檢查 ID/EX 階段的 load 指令與 IF/ID 階段指令的 rs1/rs2 依賴
+    wire load_hazard_rs1 = (id_ex_mem_read && (id_ex_rd_addr != 5'b0) && (id_ex_rd_addr == rs1));
+    wire load_hazard_rs2 = (id_ex_mem_read && (id_ex_rd_addr != 5'b0) && (id_ex_rd_addr == rs2));
+    
     assign load_use_hazard = load_hazard_rs1 || load_hazard_rs2;
+    
+    // 從ID階段指令中提取rs1和rs2地址
+    wire [4:0] rs1 = id_instr[19:15];
+    wire [4:0] rs2 = id_instr[24:20];
     
     //------------------------------------------------------------------------
     // 分支控制邏輯
@@ -286,6 +293,7 @@ module cpu_top (
         .forward_b_sel_i  (forward_b_sel),
 
         .alu_result_o   (ex_mem_alu_result_pre_fwd),
+        .forwarded_rs2_data_o (ex_forwarded_rs2_data), // 前遞後的 rs2_data（用於儲存指令）
         .zero_flag_o    (ex_zero_flag), // 用於分支條件
         .branch_target_addr_o(branch_target_addr),
         .branch_taken_o (branch_taken)
@@ -298,7 +306,7 @@ module cpu_top (
         .clk            (clk),
         .rst_n          (rst_n),
         .ex_alu_result_i(ex_mem_alu_result_pre_fwd),
-        .ex_rs2_data_i  (ex_mem_rs2_data_for_alu), // 來自 ID/EX 的 sw 用 rs2_data
+        .ex_rs2_data_i  (ex_forwarded_rs2_data), // 使用前遞後的 rs2_data
         .ex_rd_addr_i   (ex_mem_rd_addr_for_ex),    // 修正：來自 ID/EX 輸出 ex_mem_rd_addr_for_ex 的 rd_addr
         .ex_zero_flag_i (ex_zero_flag),              // 用於 MEM 或之後的分支決策
         .ex_pc_plus_4_i (ex_mem_pc_plus_4),         // PC+4（用於 JAL/JALR）
@@ -370,6 +378,8 @@ module cpu_top (
     // 前遞單元
     //------------------------------------------------------------------------
     forwarding_unit u_forwarding_unit (
+        .clk               (clk),
+        .rst_n             (rst_n),
         .ex_mem_reg_write_i(mem_wb_reg_write_ctrl_from_exmem),
         .mem_wb_reg_write_i(mem_wb_reg_write),
         .ex_mem_rd_addr_i  (mem_wb_rd_addr_from_exmem),

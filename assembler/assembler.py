@@ -266,12 +266,39 @@ def assemble_line(line_content, labels, current_address):
     elif instr == 'addi':
         machine_code = assemble_i_type(
             args[0], args[1], args[2], FUNCT3_ADDI, OPCODE_IMM, labels, current_address)
+    elif instr == 'andi':
+        machine_code = assemble_i_type(
+            args[0], args[1], args[2], FUNCT3_ANDI, OPCODE_IMM, labels, current_address)
+    elif instr == 'ori':
+        machine_code = assemble_i_type(
+            args[0], args[1], args[2], FUNCT3_ORI, OPCODE_IMM, labels, current_address)
+    elif instr == 'xori':
+        machine_code = assemble_i_type(
+            args[0], args[1], args[2], FUNCT3_XORI, OPCODE_IMM, labels, current_address)
     elif instr == 'add':
         machine_code = assemble_r_type(
             args[0], args[1], args[2], FUNCT3_ADD, FUNCT7_ADD, OPCODE_OP)
     elif instr == 'sub':
         machine_code = assemble_r_type(
             args[0], args[1], args[2], FUNCT3_SUB, FUNCT7_SUB, OPCODE_OP)
+    elif instr == 'and':
+        machine_code = assemble_r_type(
+            args[0], args[1], args[2], FUNCT3_AND, FUNCT7_ADD, OPCODE_OP)
+    elif instr == 'or':
+        machine_code = assemble_r_type(
+            args[0], args[1], args[2], FUNCT3_OR, FUNCT7_ADD, OPCODE_OP)
+    elif instr == 'xor':
+        machine_code = assemble_r_type(
+            args[0], args[1], args[2], FUNCT3_XOR, FUNCT7_ADD, OPCODE_OP)
+    elif instr == 'sll':
+        machine_code = assemble_r_type(
+            args[0], args[1], args[2], FUNCT3_SLL, FUNCT7_ADD, OPCODE_OP)
+    elif instr == 'srl':
+        machine_code = assemble_r_type(
+            args[0], args[1], args[2], FUNCT3_SRL, FUNCT7_ADD, OPCODE_OP)
+    elif instr == 'sra':
+        machine_code = assemble_r_type(
+            args[0], args[1], args[2], FUNCT3_SRA, FUNCT7_SUB, OPCODE_OP)
     elif instr == 'mul':
         machine_code = assemble_r_type(
             args[0], args[1], args[2], FUNCT3_MUL, FUNCT7_MULDIV, OPCODE_OP)

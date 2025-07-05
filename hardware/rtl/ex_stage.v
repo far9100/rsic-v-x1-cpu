@@ -38,6 +38,7 @@ module ex_stage (
 
     // 輸出到 EX/MEM 管線暫存器
     output wire [31:0] alu_result_o,   // 來自 ALU 或乘法器的結果
+    output wire [31:0] forwarded_rs2_data_o, // 前遞後的 rs2_data（用於儲存指令）
     output wire        zero_flag_o,    // 來自 ALU 的零旗標（用於分支指令）
     output wire [31:0] branch_target_addr_o, // 計算的分支目標位址
     output wire        branch_taken_o  // 分支是否被採用
@@ -58,6 +59,9 @@ module ex_stage (
         (forward_b_sel_i == 2'b01) ? ex_mem_alu_result_i :  // 從 EX/MEM 前遞
         (forward_b_sel_i == 2'b10) ? mem_wb_alu_result_i :  // 從 MEM/WB 前遞
         rs2_data_i;                                         // 使用原始值
+
+    // 輸出前遞後的 rs2_data（用於儲存指令）
+    assign forwarded_rs2_data_o = forwarded_rs2_data;
 
     // ALU 操作數選擇
     wire [31:0] alu_operand_a;
