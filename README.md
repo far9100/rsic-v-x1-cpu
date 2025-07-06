@@ -40,7 +40,8 @@ rsic-v-x1-cpu/
 │       ├── tb_hash_test.v           # 哈希運算測試 testbench
 │       ├── tb_fft_test.v            # FFT測試 testbench
 │       ├── tb_convolution_test.v    # 卷積測試 testbench
-│       └── tb_bubble_sort_test.v    # 氣泡排序測試 testbench
+│       ├── tb_bubble_sort_test.v    # 氣泡排序測試 testbench
+│       └── tb_logic_test.v          # 逻辑指令測試 testbench
 └── tests/                 # 測試程式
     ├── asm_sources/       # 組語原始檔
     │   ├── add_integrated_test.asm     # 加法測試
@@ -53,8 +54,9 @@ rsic-v-x1-cpu/
     │   ├── prime_sieve_test.asm        # 埃拉托色尼篩法測試
     │   ├── hash_test.asm               # 哈希運算測試
     │   ├── fft_test.asm                # FFT測試
-    │   ├── convolution_test.asm        # 卷積測試
-    │   └── bubble_sort_test.asm        # 氣泡排序測試
+│   ├── convolution_test.asm        # 卷積測試
+│   ├── bubble_sort_test.asm        # 氣泡排序測試
+│   └── logic_integrated_test.asm   # 逻辑指令測試
     └── hex_outputs/       # 組譯後的機器碼
         ├── add_integrated_test.hex
         ├── mul_integrated_test.hex
@@ -67,7 +69,8 @@ rsic-v-x1-cpu/
         ├── hash_test.hex
         ├── fft_test.hex
         ├── convolution_test.hex
-        └── bubble_sort_test.hex        # 氣泡排序測試機器碼
+        ├── bubble_sort_test.hex        # 氣泡排序測試機器碼
+        └── logic_integrated_test.hex   # 逻辑指令測試機器碼
 ```
 
 ## CPU 特性
@@ -354,3 +357,28 @@ vvp tests/output/bubble_sort_sim
 - **測試指令**: ADDI (立即數加法)、ADD (暫存器加法)、BLT (小於分支)、SW (儲存字)
 - **測試重點**: 條件分支、暫存器操作、記憶體存取
 - **輸出檔案**: `bubble_sort_result.csv`, `bubble_sort_process.csv`, `tb_bubble_sort_test.vcd`
+
+### 13. 逻辑指令測試
+```bash
+# 組譯測試程式
+python assembler/assembler.py ./tests/asm_sources/logic_integrated_test.asm -o ./tests/hex_outputs/logic_integrated_test.hex
+
+# 編譯 Verilog
+iverilog -o tests/output/logic_sim hardware/sim/tb_logic_test.v hardware/rtl/*.v
+
+# 執行模擬
+vvp tests/output/logic_sim
+```
+
+**逻辑指令測試內容:**
+- AND 指令測試 - 位元AND運算
+- OR 指令測試 - 位元OR運算  
+- XOR 指令測試 - 位元XOR運算
+- ANDI 指令測試 - 立即數AND運算
+- ORI 指令測試 - 立即數OR運算
+- XORI 指令測試 - 立即數XOR運算
+- 全零/全一測試 - 邊界條件
+- 自反運算測試 - 相同運算元
+- 負數立即數測試 - 符號擴展
+- 各種位元模式測試 - 驗證位元操作正確性
+- **輸出檔案**: `logic_result.csv`, `logic_process.csv`, `tb_logic_test.vcd`
