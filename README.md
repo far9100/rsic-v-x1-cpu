@@ -29,51 +29,43 @@ rsic-v-x1-cpu/
 │   │   ├── pipeline_reg_ex_mem.v  # EX/MEM 管線暫存器
 │   │   └── pipeline_reg_mem_wb.v  # MEM/WB 管線暫存器
 │   └── sim/               # 模擬檔案
-│       ├── tb_branch_test.v # 分支測試 testbench
-│       ├── tb_add_test.v   # 加法測試 testbench
-│       ├── tb_mul_test.v   # 乘法測試 testbench
-│       ├── tb_fibonacci_test.v # 斐波那契測試 testbench
-│       ├── tb_factorial_test.v # 階乘計算測試 testbench
-│       ├── tb_gcd_test.v       # 輾轉相除法測試 testbench
+│       ├── tb_add_test.v           # 加法測試 testbench
+│       ├── tb_logic_test.v         # 邏輯指令測試 testbench
+│       ├── tb_shift_compare_test.v # 位移與比較指令測試 testbench
+│       ├── tb_mul_test.v           # 乘法測試 testbench
 │       ├── tb_div_integrated_test.v # 除法測試 testbench
-│       ├── tb_prime_sieve_test.v    # 埃拉托色尼篩法測試 testbench
-│       ├── tb_hash_test.v           # 哈希運算測試 testbench
-│       ├── tb_fft_test.v            # FFT測試 testbench
-│       ├── tb_convolution_test.v    # 卷積測試 testbench
-│       ├── tb_bubble_sort_test.v    # 氣泡排序測試 testbench
-│       ├── tb_logic_test.v          # 逻辑指令測試 testbench
-│       └── tb_shift_compare_test.v  # 位移與比較指令測試 testbench
-└── tests/                 # 測試程式
-    ├── asm_sources/       # 組語原始檔
-    │   ├── add_integrated_test.asm     # 加法測試
-    │   ├── mul_integrated_test.asm     # 乘法測試
-    │   ├── branch_integrated_test.asm  # 分支測試（包含LUI、JAL/JALR）
-    │   ├── fibonacci_test.asm          # 斐波那契數列測試
-    │   ├── factorial_test.asm          # 階乘計算測試
-    │   ├── gcd_test.asm                # 輾轉相除法測試
-    │   ├── div_integrated_test.asm     # 除法測試
-    │   ├── prime_sieve_test.asm        # 埃拉托色尼篩法測試
-    │   ├── hash_test.asm               # 哈希運算測試
-    │   ├── fft_test.asm                # FFT測試
-│   ├── convolution_test.asm        # 卷積測試
-│   ├── bubble_sort_test.asm        # 氣泡排序測試
-│   ├── logic_integrated_test.asm   # 逻辑指令測試
-│   └── shift_compare_test.asm      # 位移與比較指令測試
-    └── hex_outputs/       # 組譯後的機器碼
-        ├── add_integrated_test.hex
-        ├── mul_integrated_test.hex
-        ├── branch_integrated_test.hex
-        ├── fibonacci_test.hex
-        ├── factorial_test.hex
-        ├── gcd_test.hex
-        ├── div_integrated_test.hex
-        ├── prime_sieve_test.hex
-        ├── hash_test.hex
-        ├── fft_test.hex
-        ├── convolution_test.hex
-        ├── bubble_sort_test.hex        # 氣泡排序測試機器碼
-        ├── logic_integrated_test.hex   # 逻辑指令測試機器碼
-        └── shift_compare_test.hex      # 位移與比較指令測試機器碼
+│       ├── tb_branch_test.v        # 分支測試 testbench
+│       ├── tb_convolution_test.v   # 卷積測試 testbench
+│       ├── tb_fibonacci_test.v     # 斐波那契測試 testbench
+│       ├── tb_factorial_test.v     # 階乘計算測試 testbench
+│       ├── tb_bubble_sort_test.v   # 氣泡排序測試 testbench
+│       ├── tb_gcd_test.v           # 輾轉相除法測試 testbench
+│       ├── tb_hash_test.v          # 哈希運算測試 testbench
+│       ├── tb_prime_sieve_test.v   # 埃拉托色尼篩法測試 testbench
+│       └── tb_fft_test.v           # FFT測試 testbench
+├── tests/                 # 測試程式
+│   ├── asm_sources/       # 組語原始檔
+│   │   ├── add_integrated_test.asm     # 加法測試
+│   │   ├── logic_integrated_test.asm   # 邏輯指令測試
+│   │   ├── shift_compare_test.asm      # 位移與比較指令測試
+│   │   ├── mul_integrated_test.asm     # 乘法測試
+│   │   ├── div_integrated_test.asm     # 除法測試
+│   │   ├── branch_integrated_test.asm  # 分支測試（包含LUI、JAL/JALR）
+│   │   ├── convolution_test.asm        # 卷積測試
+│   │   ├── fibonacci_test.asm          # 斐波那契數列測試
+│   │   ├── factorial_test.asm          # 階乘計算測試
+│   │   ├── bubble_sort_test.asm        # 氣泡排序測試
+│   │   ├── gcd_test.asm                # 輾轉相除法測試
+│   │   ├── hash_test.asm               # 哈希運算測試
+│   │   ├── prime_sieve_test.asm        # 埃拉托色尼篩法測試
+│   │   └── fft_test.asm                # FFT測試
+│   ├── hex_outputs/       # 組譯後的機器碼檔案 (*.hex)
+│   └── output/            # 測試輸出檔案
+│       ├── *_sim          # 可執行模擬文件
+│       ├── *_process.csv  # 測試過程記錄
+│       ├── *_result.csv   # 測試結果摘要
+│       └── *.vcd          # 波形檔案
+└── README.md              # 專案說明文件
 ```
 
 ## CPU 特性
@@ -132,11 +124,11 @@ rsic-v-x1-cpu/
 - `_sim` - 除法測試的詳細模擬記錄
 
 ### 輸出文件說明
-每個測試都會產生以下四種文件：
+每個測試都會產生以下文件：
 1. **過程記錄文件** (`*_process.csv`): 記錄測試執行過程中的詳細信息
 2. **結果摘要文件** (`*_result.csv`): 包含測試結果的PASS/FAIL狀態和詳細驗證
 3. **波形文件** (`*.vcd`): 可用於波形查看器（如GTKWave）進行信號分析
-4. **模擬記錄文件** (`_sim`): 除法測試的專用詳細記錄
+4. **可執行模擬文件** (`*_sim`): iverilog 編譯後的可執行文件，用於運行模擬
 
 ### 1. 加法測試
 ```bash
@@ -348,9 +340,8 @@ vvp tests/output/bubble_sort_sim
 ```
 
 **氣泡排序測試內容:**
-- **算法**: 簡化氣泡排序算法實現 (10個元素)
-- **測試數據**: 10個數值的陣列 [9, 3, 7, 1, 5, 8, 2, 6, 4, 10]
-- **預期結果**: 排序後陣列 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+- 10個數值的陣列 [9, 3, 7, 1, 5, 8, 2, 6, 4, 10]
+
 
 ### 11. 輾轉相除法測試
 ```bash
@@ -391,7 +382,6 @@ vvp tests/output/hash_sim
 - 結果會寫入資料記憶體 0x300 開始的連續位置
 - 測試位移、邏輯運算、迴圈控制和記憶體存取
 - 驗證哈希值非零性和唯一性
-- **輸出檔案**: `hash_result.csv`, `hash_process.csv`, `tb_hash_test.vcd`
 
 ### 13. 埃拉托色尼篩法測試
 ```bash
@@ -425,4 +415,3 @@ vvp tests/output/fft_sim
 - **功能**: 4點離散傅立葉變換(DFT)演算法測試  
 - **演算法**: 直接計算DFT，避免複數三角函數  
 - **測試數據**: 三種不同信號模式  
-- **輸出**: `fft_result.csv`, `fft_process.csv`, `tb_fft_test.vcd`
