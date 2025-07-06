@@ -275,6 +275,12 @@ def assemble_line(line_content, labels, current_address):
     elif instr == 'xori':
         machine_code = assemble_i_type(
             args[0], args[1], args[2], FUNCT3_XORI, OPCODE_IMM, labels, current_address)
+    elif instr == 'slti':
+        machine_code = assemble_i_type(
+            args[0], args[1], args[2], FUNCT3_SLTI, OPCODE_IMM, labels, current_address)
+    elif instr == 'sltiu':
+        machine_code = assemble_i_type(
+            args[0], args[1], args[2], FUNCT3_SLTIU, OPCODE_IMM, labels, current_address)
     elif instr == 'add':
         machine_code = assemble_r_type(
             args[0], args[1], args[2], FUNCT3_ADD, FUNCT7_ADD, OPCODE_OP)
@@ -299,6 +305,12 @@ def assemble_line(line_content, labels, current_address):
     elif instr == 'sra':
         machine_code = assemble_r_type(
             args[0], args[1], args[2], FUNCT3_SRA, FUNCT7_SUB, OPCODE_OP)
+    elif instr == 'slt':
+        machine_code = assemble_r_type(
+            args[0], args[1], args[2], FUNCT3_SLT, FUNCT7_ADD, OPCODE_OP)
+    elif instr == 'sltu':
+        machine_code = assemble_r_type(
+            args[0], args[1], args[2], FUNCT3_SLTU, FUNCT7_ADD, OPCODE_OP)
     elif instr == 'mul':
         machine_code = assemble_r_type(
             args[0], args[1], args[2], FUNCT3_MUL, FUNCT7_MULDIV, OPCODE_OP)

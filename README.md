@@ -41,7 +41,8 @@ rsic-v-x1-cpu/
 │       ├── tb_fft_test.v            # FFT測試 testbench
 │       ├── tb_convolution_test.v    # 卷積測試 testbench
 │       ├── tb_bubble_sort_test.v    # 氣泡排序測試 testbench
-│       └── tb_logic_test.v          # 逻辑指令測試 testbench
+│       ├── tb_logic_test.v          # 逻辑指令測試 testbench
+│       └── tb_shift_compare_test.v  # 位移與比較指令測試 testbench
 └── tests/                 # 測試程式
     ├── asm_sources/       # 組語原始檔
     │   ├── add_integrated_test.asm     # 加法測試
@@ -56,7 +57,8 @@ rsic-v-x1-cpu/
     │   ├── fft_test.asm                # FFT測試
 │   ├── convolution_test.asm        # 卷積測試
 │   ├── bubble_sort_test.asm        # 氣泡排序測試
-│   └── logic_integrated_test.asm   # 逻辑指令測試
+│   ├── logic_integrated_test.asm   # 逻辑指令測試
+│   └── shift_compare_test.asm      # 位移與比較指令測試
     └── hex_outputs/       # 組譯後的機器碼
         ├── add_integrated_test.hex
         ├── mul_integrated_test.hex
@@ -70,7 +72,8 @@ rsic-v-x1-cpu/
         ├── fft_test.hex
         ├── convolution_test.hex
         ├── bubble_sort_test.hex        # 氣泡排序測試機器碼
-        └── logic_integrated_test.hex   # 逻辑指令測試機器碼
+        ├── logic_integrated_test.hex   # 逻辑指令測試機器碼
+        └── shift_compare_test.hex      # 位移與比較指令測試機器碼
 ```
 
 ## CPU 特性
@@ -382,3 +385,35 @@ vvp tests/output/logic_sim
 - 負數立即數測試 - 符號擴展
 - 各種位元模式測試 - 驗證位元操作正確性
 - **輸出檔案**: `logic_result.csv`, `logic_process.csv`, `tb_logic_test.vcd`
+
+### 14. 位移與比較指令測試
+```bash
+# 組譯測試程式
+python assembler/assembler.py ./tests/asm_sources/shift_compare_test.asm -o ./tests/hex_outputs/shift_compare_test.hex
+
+# 編譯 Verilog
+iverilog -o tests/output/shift_compare_sim hardware/sim/tb_shift_compare_test.v hardware/rtl/*.v
+
+# 執行模擬
+vvp tests/output/shift_compare_sim
+```
+
+**位移與比較指令測試內容:**
+- **位移指令**:
+  - SLL 指令測試 - 邏輯左移
+  - SRL 指令測試 - 邏輯右移
+  - SRA 指令測試 - 算術右移（保持符號位）
+  - SLLI 指令測試 - 立即數邏輯左移
+  - SRLI 指令測試 - 立即數邏輯右移
+  - SRAI 指令測試 - 立即數算術右移（保持符號位）
+- **比較指令**:
+  - SLT 指令測試 - 有符號比較（小於）
+  - SLTU 指令測試 - 無符號比較（小於）
+  - SLTI 指令測試 - 有符號立即數比較（小於）
+  - SLTIU 指令測試 - 無符號立即數比較（小於）
+- **測試案例**:
+  - 正數/負數位移測試
+  - 邊界值測試（零值、最大值）
+  - 有符號/無符號比較差異測試
+  - 相等值比較測試
+- **輸出檔案**: `shift_compare_result.csv`, `shift_compare_process.csv`, `tb_shift_compare_test.vcd`
