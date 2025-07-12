@@ -406,7 +406,7 @@ def main():
         os.makedirs(output_dir)
 
     lines = []
-    with open(args.input_file, 'r') as f:
+    with open(args.input_file, 'r', encoding='utf-8') as f:
         lines = f.readlines()
 
     labels = {}
