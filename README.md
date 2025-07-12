@@ -29,7 +29,7 @@ rsic-v-x1-cpu/
 │   │   ├── pipeline_reg_ex_mem.v  # EX/MEM 管線暫存器
 │   │   └── pipeline_reg_mem_wb.v  # MEM/WB 管線暫存器
 │   └── sim/               # 模擬檔案
-│       ├── tb_add_test.v           # 加法測試 testbench
+│       ├── tb_add_sub_test.v       # 加減法測試 testbench
 │       ├── tb_logic_test.v         # 邏輯指令測試 testbench
 │       ├── tb_shift_compare_test.v # 位移與比較指令測試 testbench
 │       ├── tb_mul_test.v           # 乘法測試 testbench
@@ -45,7 +45,7 @@ rsic-v-x1-cpu/
 │       └── tb_fft_test.v           # FFT測試 testbench
 ├── tests/                 # 測試程式
 │   ├── asm_sources/       # 組語原始檔
-│   │   ├── add_integrated_test.asm     # 加法測試
+│   │   ├── add_sub_integrated_test.asm # 加減法測試
 │   │   ├── logic_integrated_test.asm   # 邏輯指令測試
 │   │   ├── shift_compare_test.asm      # 位移與比較指令測試
 │   │   ├── mul_integrated_test.asm     # 乘法測試
@@ -130,24 +130,32 @@ rsic-v-x1-cpu/
 3. **波形文件** (`*.vcd`): 可用於波形查看器（如GTKWave）進行信號分析
 4. **可執行模擬文件** (`*_sim`): iverilog 編譯後的可執行文件，用於運行模擬
 
-### 1. 加法測試
+### 1. 加減法測試
 ```bash
 # 組譯測試程式
-python assembler/assembler.py ./tests/asm_sources/add_integrated_test.asm -o ./tests/hex_outputs/add_integrated_test.hex
+python assembler/assembler.py ./tests/asm_sources/add_sub_integrated_test.asm -o ./tests/hex_outputs/add_sub_integrated_test.hex
 
 # 編譯 Verilog
-iverilog -o tests/output/add_sim hardware/sim/tb_add_test.v hardware/rtl/*.v
+iverilog -o tests/output/add_sub_sim hardware/sim/tb_add_sub_test.v hardware/rtl/*.v
 
 # 執行模擬
-vvp tests/output/add_sim
+vvp tests/output/add_sub_sim
 ```
 
-**加法測試內容:**
-- ADD 指令測試
-- ADDI 指令測試
-- 正數加法
-- 負數加法
-- 溢位情況
+**加減法測試內容:**
+- **加法測試**:
+  - ADD 指令測試
+  - ADDI 指令測試
+  - 正數加法
+  - 負數加法
+  - 與零的加法
+  - 較大數字的加法
+- **減法測試**:
+  - SUB 指令測試
+  - 基本減法測試
+  - 較大數字的減法
+  - 減去負數測試
+  - 結果為零的減法
 
 ### 2. 邏輯指令測試
 ```bash

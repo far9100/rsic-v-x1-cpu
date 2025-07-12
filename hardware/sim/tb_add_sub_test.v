@@ -1,17 +1,17 @@
-// RISC-V 32I CPU 加法測試平台
-// 檔案：hardware/sim/tb_add_test.v
+// RISC-V 32I CPU 加減法測試平台
+// 檔案：hardware/sim/tb_add_sub_test.v
 
 `timescale 1ns / 1ps
 
 // 為清晰起見定義 ALU 操作碼
 `define ALU_OP_MUL 4'b1010
 
-module tb_add_test;
+module tb_add_sub_test;
 
     // 參數
     localparam CLK_PERIOD = 10; // 時脈週期（納秒）（例如，100 MHz 時脈）
     localparam RESET_DURATION = CLK_PERIOD * 5; // 重置保持時間
-    localparam MAX_SIM_CYCLES = 300; // 最大模擬週期數
+    localparam MAX_SIM_CYCLES = 400; // 最大模擬週期數（增加以處理更多測試）
     localparam MEM_SIZE_WORDS = 1024; // 記憶體大小（字組數）
 
     // 測試平台信號
@@ -46,7 +46,7 @@ module tb_add_test;
     initial begin
         // 從 .hex 檔案載入指令（例如，由組譯器產生）
         // 重要：確保此路徑相對於執行 vvp 的位置是正確的（通常是專案根目錄）
-        $readmemh("tests/hex_outputs/add_integrated_test.hex", instr_mem);
+        $readmemh("tests/hex_outputs/add_sub_integrated_test.hex", instr_mem);
         
         // 初始化資料記憶體（例如，設為零）
         for (i = 0; i < MEM_SIZE_WORDS; i = i + 1) begin
@@ -92,8 +92,8 @@ module tb_add_test;
 
     // 時脈產生
     initial begin
-        fp_process = $fopen("tests/output/add_process.csv", "w");
-        fp_result  = $fopen("tests/output/add_result.csv", "w");
+        fp_process = $fopen("tests/output/add_sub_process.csv", "w");
+        fp_result  = $fopen("tests/output/add_sub_result.csv", "w");
         clk = 0;
         forever #(CLK_PERIOD / 2) clk = ~clk;
     end
@@ -108,7 +108,7 @@ module tb_add_test;
     // 模擬控制和監控
     integer cycle_count_sim = 0;
     initial begin
-        $fdisplay(fp_process, "開始 RISC-V CPU 加法測試模擬...");
+        $fdisplay(fp_process, "開始 RISC-V CPU 加減法測試模擬...");
         wait (rst_n === 1);
         $fdisplay(fp_process, "重置解除。CPU 操作開始於時間 %0t。", $time);
         for (cycle_count_sim = 0; cycle_count_sim < MAX_SIM_CYCLES; cycle_count_sim = cycle_count_sim + 1) begin
@@ -118,28 +118,38 @@ module tb_add_test;
             end
         end
         // 結果csv：測試結果
-        $fdisplay(fp_result, "=== 加法測試結果 ===");
-        if (data_mem[32'h100/4]   == 3   &&
-            data_mem[32'h100/4+1] == 30  &&
-            data_mem[32'h100/4+2] == 2   &&
-            data_mem[32'h100/4+3] == 0   &&
-            data_mem[32'h100/4+4] == 7   &&
-            data_mem[32'h100/4+5] == 300) begin
+        $fdisplay(fp_result, "=== 加減法測試結果 ===");
+        // 驗證加法和減法測試結果
+        if (data_mem[32'h100/4]   == 3   &&  // ADD: 1 + 2 = 3
+            data_mem[32'h100/4+1] == 30  &&  // ADD: 10 + 20 = 30
+            data_mem[32'h100/4+2] == 2   &&  // ADD: 5 + (-3) = 2
+            data_mem[32'h100/4+3] == 0   &&  // ADD: 5 + (-5) = 0
+            data_mem[32'h100/4+4] == 7   &&  // ADD: 7 + 0 = 7
+            data_mem[32'h100/4+5] == 300 &&  // ADD: 100 + 200 = 300
+            data_mem[32'h100/4+6] == 3   &&  // SUB: 5 - 2 = 3
+            data_mem[32'h100/4+7] == 20  &&  // SUB: 30 - 10 = 20
+            data_mem[32'h100/4+8] == 5   &&  // SUB: 3 - (-2) = 5
+            data_mem[32'h100/4+9] == 0) begin // SUB: 8 - 8 = 0
             $fdisplay(fp_result, "PASS");
         end else begin
             $fdisplay(fp_result, "FAIL");
         end
         // 細項測試
-        $fdisplay(fp_result, "=== 細項測試 ===");
-        $fdisplay(fp_result, "ADD,%s", (data_mem[32'h100/4] == 3) ? "PASS" : "FAIL");
-        $fdisplay(fp_result, "ADDI,%s", (data_mem[32'h100/4+1] == 30) ? "PASS" : "FAIL");
-        $fdisplay(fp_result, "正數加法,%s", (data_mem[32'h100/4+2] == 2) ? "PASS" : "FAIL");
-        $fdisplay(fp_result, "負數加法,%s", (data_mem[32'h100/4+3] == 0) ? "PASS" : "FAIL");
-        $fdisplay(fp_result, "溢位情況,%s", (data_mem[32'h100/4+4] == 7) ? "PASS" : "FAIL");
-        $fdisplay(fp_result, "綜合加法,%s", (data_mem[32'h100/4+5] == 300) ? "PASS" : "FAIL");
+        $fdisplay(fp_result, "=== 加法測試細項 ===");
+        $fdisplay(fp_result, "ADD 基本測試,%s", (data_mem[32'h100/4] == 3) ? "PASS" : "FAIL");
+        $fdisplay(fp_result, "ADD 較大數字,%s", (data_mem[32'h100/4+1] == 30) ? "PASS" : "FAIL");
+        $fdisplay(fp_result, "ADD 正負數,%s", (data_mem[32'h100/4+2] == 2) ? "PASS" : "FAIL");
+        $fdisplay(fp_result, "ADD 結果為零,%s", (data_mem[32'h100/4+3] == 0) ? "PASS" : "FAIL");
+        $fdisplay(fp_result, "ADD 加零測試,%s", (data_mem[32'h100/4+4] == 7) ? "PASS" : "FAIL");
+        $fdisplay(fp_result, "ADD 大數測試,%s", (data_mem[32'h100/4+5] == 300) ? "PASS" : "FAIL");
+        $fdisplay(fp_result, "=== 減法測試細項 ===");
+        $fdisplay(fp_result, "SUB 基本測試,%s", (data_mem[32'h100/4+6] == 3) ? "PASS" : "FAIL");
+        $fdisplay(fp_result, "SUB 較大數字,%s", (data_mem[32'h100/4+7] == 20) ? "PASS" : "FAIL");
+        $fdisplay(fp_result, "SUB 減負數,%s", (data_mem[32'h100/4+8] == 5) ? "PASS" : "FAIL");
+        $fdisplay(fp_result, "SUB 結果為零,%s", (data_mem[32'h100/4+9] == 0) ? "PASS" : "FAIL");
         // 暫存器/記憶體狀態
         $fdisplay(fp_result, "=== 記憶體狀態 ===");
-        for (i = 0; i < 6; i = i + 1) begin
+        for (i = 0; i < 10; i = i + 1) begin
             $fdisplay(fp_result, "data_mem[%0d],%0d", i, data_mem[32'h100/4+i]);
         end
         // 調試信息
@@ -152,8 +162,8 @@ module tb_add_test;
 
     // 波形輸出
     initial begin
-        $dumpfile("tests/output/tb_add_test.vcd");
-        $dumpvars(0, tb_add_test);
+        $dumpfile("tests/output/tb_add_sub_test.vcd");
+        $dumpvars(0, tb_add_sub_test);
     end
 
 endmodule 

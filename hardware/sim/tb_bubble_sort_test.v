@@ -1,6 +1,6 @@
 // RISC-V 32I CPU 氣泡排序測試平台
 // 檔案：hardware/sim/tb_bubble_sort_test.v
-// 功能：測試十個數值的氣泡排序功能
+// 功能：測試十個數值的完整氣泡排序算法實現
 
 `timescale 1ns / 1ps
 
@@ -9,7 +9,7 @@ module tb_bubble_sort_test;
     // 參數
     localparam CLK_PERIOD = 10;         // 時脈週期（納秒）
     localparam RESET_DURATION = CLK_PERIOD * 5; // 重置保持時間
-    localparam MAX_SIM_CYCLES = 5000;   // 最大模擬週期數（10個數值需要更多週期）
+    localparam MAX_SIM_CYCLES = 15000;  // 最大模擬週期數（真正氣泡排序需要更多週期）
     localparam MEM_SIZE_WORDS = 1024;   // 記憶體大小（字組數）
 
     // 測試平台信號
@@ -121,7 +121,7 @@ module tb_bubble_sort_test;
     reg test_completed = 0;
     
     initial begin
-        $fdisplay(fp_process, "%0t,simulation_start,開始 RISC-V CPU 氣泡排序測試模擬,,%s", $time, "測試數據：[9, 3, 7, 1, 5, 8, 2, 6, 4, 10] → 排序後: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]");
+        $fdisplay(fp_process, "%0t,simulation_start,開始 RISC-V CPU 完整氣泡排序算法測試模擬,,%s", $time, "測試數據：[9, 3, 7, 1, 5, 8, 2, 6, 4, 10] → 排序後: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]");
         
         wait (rst_n === 1);
         $fdisplay(fp_process, "%0t,reset_release,重置解除 CPU 操作開始,,%s", $time, "進入執行階段");
